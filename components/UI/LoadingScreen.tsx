@@ -41,8 +41,8 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
             {/* Overlay to ensure text/ui readability if needed */}
             <div className="absolute inset-0 bg-black/30 z-0" />
 
-            {/* Loading Container */}
-            <div className="relative z-10 flex flex-col items-center gap-8 w-full max-w-2xl px-4">
+            {/* Loading Container - Lowered to not cover logo */}
+            <div className="relative z-10 flex flex-col items-center gap-8 w-full max-w-2xl px-4 mt-32">
 
                 {/* Loading UI / Bar Area */}
                 <div className="relative w-[300px] h-[60px] flex items-center justify-center">
