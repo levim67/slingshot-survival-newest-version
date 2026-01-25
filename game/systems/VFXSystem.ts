@@ -47,23 +47,24 @@ export const spawnExplosion = (state: GameState, pos: Vector2, c1: string, c2: s
     // --- NO FLASH (removed) ---
 
     // --- PHASE 1: QUICK BURST - Large Chunks (curved wedges) ---
-    const largeChunkCount = lod === 2 ? 2 : (lod === 1 ? 4 : Math.floor(6 * budgetRatio));
+    // Massive increase in debris for better "spray"
+    const largeChunkCount = lod === 2 ? 3 : (lod === 1 ? 5 : Math.floor(8 * budgetRatio));
     for (let i = 0; i < largeChunkCount; i++) {
         const angle = randomRange(0, Math.PI * 2);
-        const speed = randomRange(200, 400); // Faster initial burst
+        const speed = randomRange(300, 600); // MUCH FASTER (was 200-400)
 
         state.world.entities.push({
             id: `debris_lg_${Math.random()}`,
             type: 'particle',
             isDebris: true,
             position: { ...pos },
-            radius: randomRange(15, 25), // Larger chunks
+            radius: randomRange(18, 28), // Larger
             color: c1,
             velocity: { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed },
-            lifeTime: randomRange(0.6, 1.0), // Longer visible
+            lifeTime: randomRange(0.7, 1.2), // Longer life
             gravity: true,
-            drag: 0.92, // Slower drag
-            angularVelocity: randomRange(-10, 10),
+            drag: 0.96, // LOWER DRAG (was 0.94) - flies further
+            angularVelocity: randomRange(-15, 15),
             shape: 'wedge',
             rotation: randomRange(0, Math.PI * 2),
             scaleDecay: true
@@ -71,23 +72,23 @@ export const spawnExplosion = (state: GameState, pos: Vector2, c1: string, c2: s
     }
 
     // --- Medium Shards (triangles) ---
-    const mediumShardCount = lod === 2 ? 3 : (lod === 1 ? 6 : Math.floor(10 * budgetRatio));
+    const mediumShardCount = lod === 2 ? 4 : (lod === 1 ? 8 : Math.floor(14 * budgetRatio));
     for (let i = 0; i < mediumShardCount; i++) {
         const angle = randomRange(0, Math.PI * 2);
-        const speed = randomRange(150, 350);
+        const speed = randomRange(200, 500); // Faster
 
         state.world.entities.push({
             id: `debris_md_${Math.random()}`,
             type: 'particle',
             isDebris: true,
             position: { ...pos },
-            radius: randomRange(8, 15), // Bigger shards
+            radius: randomRange(10, 18),
             color: Math.random() > 0.5 ? c1 : c2,
             velocity: { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed },
-            lifeTime: randomRange(0.5, 0.9),
+            lifeTime: randomRange(0.6, 1.0),
             gravity: true,
-            drag: 0.90,
-            angularVelocity: randomRange(-15, 15),
+            drag: 0.94, // Lower drag
+            angularVelocity: randomRange(-20, 20),
             shape: 'triangle',
             rotation: randomRange(0, Math.PI * 2),
             scaleDecay: true
