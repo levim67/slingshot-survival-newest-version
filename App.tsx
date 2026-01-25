@@ -8,8 +8,14 @@ import Shop from './components/UI/Shop';
 import { GameStateStatus, Upgrades, UPGRADE_ITEMS } from './types';
 import { initAudio } from './utils/audio';
 
+import LoadingScreen from './components/UI/LoadingScreen';
+
 const App: React.FC = () => {
+  // Loading State
+  const [isLoading, setIsLoading] = useState(true);
+
   // Persistent State
+
   const [totalCoins, setTotalCoins] = useState<number>(() => {
     const saved = localStorage.getItem('slingshot_coins');
     return saved ? parseInt(saved) : 0;
@@ -257,6 +263,8 @@ const App: React.FC = () => {
           onMenu={() => setStatus(GameStateStatus.MENU)}
         />
       )}
+
+      {isLoading && <LoadingScreen onComplete={() => setIsLoading(false)} />}
     </div>
   );
 };
