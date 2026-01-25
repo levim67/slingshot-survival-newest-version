@@ -264,7 +264,16 @@ const App: React.FC = () => {
         />
       )}
 
-      {isLoading && <LoadingScreen onComplete={() => setIsLoading(false)} />}
+      {isLoading && (
+        <LoadingScreen
+          onComplete={() => {
+            initAudio();
+            // Play a confirm sound
+            import('./utils/audio').then(mod => mod.playSFX('ui'));
+            setIsLoading(false);
+          }}
+        />
+      )}
     </div>
   );
 };

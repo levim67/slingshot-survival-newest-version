@@ -322,14 +322,29 @@ export const renderGame = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
                     ctx.shadowColor = isSuper ? '#ff2222' : '#22ff22';
                     ctx.shadowBlur = 12;
 
-                    // Draw each spike individually for better look
-                    for (let i = 0; i < spikeCount; i++) {
-                        const baseAngle = (Math.PI * 2 * i) / spikeCount;
-                        const spikeLength = isSuper ? e.radius * 1.6 : e.radius * 1.4;
-                        const baseWidth = isSuper ? 0.15 : 0.2;
+                    // OPTIMIZATION: Create gradient ONCE per ball
+                    const spikeLength = isSuper ? e.radius * 1.6 : e.radius * 1.4;
+                    const grad = ctx.createLinearGradient(e.radius * 0.5, 0, spikeLength, 0);
+                    if (isSuper) {
+                        grad.addColorStop(0, '#8b0000');
+                        grad.addColorStop(0.6, '#ff4444');
+                        grad.addColorStop(1, '#ffffff');
+                        ctx.strokeStyle = '#440000';
+                    } else {
+                        grad.addColorStop(0, '#006400');
+                        grad.addColorStop(0.6, '#44ff44');
+                        grad.addColorStop(1, '#ffffff');
+                        ctx.strokeStyle = '#003300';
+                    }
+                    ctx.fillStyle = grad;
+                    ctx.lineWidth = 1.5;
 
+                    const baseWidth = isSuper ? 0.15 : 0.2;
+
+                    // Draw all spikes
+                    for (let i = 0; i < spikeCount; i++) {
                         ctx.save();
-                        ctx.rotate(baseAngle);
+                        ctx.rotate((Math.PI * 2 * i) / spikeCount);
 
                         // Spike body (sharp triangle)
                         ctx.beginPath();
@@ -338,23 +353,7 @@ export const renderGame = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
                         ctx.lineTo(e.radius * 0.5, -Math.tan(baseWidth) * e.radius * 0.5);
                         ctx.closePath();
 
-                        // Gradient for spike
-                        const grad = ctx.createLinearGradient(e.radius * 0.5, 0, spikeLength, 0);
-                        if (isSuper) {
-                            grad.addColorStop(0, '#8b0000');
-                            grad.addColorStop(0.6, '#ff4444');
-                            grad.addColorStop(1, '#ffffff');
-                        } else {
-                            grad.addColorStop(0, '#006400');
-                            grad.addColorStop(0.6, '#44ff44');
-                            grad.addColorStop(1, '#ffffff');
-                        }
-                        ctx.fillStyle = grad;
                         ctx.fill();
-
-                        // Dark edge outline
-                        ctx.strokeStyle = isSuper ? '#440000' : '#003300';
-                        ctx.lineWidth = 1.5;
                         ctx.stroke();
 
                         ctx.restore();

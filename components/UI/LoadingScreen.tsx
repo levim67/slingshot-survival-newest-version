@@ -38,14 +38,14 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
                 style={{ backgroundImage: `url('https://raw.githubusercontent.com/levim67/slingshot-survival-assets/main/background.png')` }}
             />
 
-            {/* Overlay to ensure text/ui readability if needed, though assets seem self-sufficient */}
+            {/* Overlay to ensure text/ui readability if needed */}
             <div className="absolute inset-0 bg-black/30 z-0" />
 
             {/* Loading Container */}
             <div className="relative z-10 flex flex-col items-center gap-8 w-full max-w-2xl px-4">
 
                 {/* Loading UI / Bar Area */}
-                <div className="relative w-[600px] h-[100px] flex items-center justify-center">
+                <div className="relative w-[300px] h-[60px] flex items-center justify-center">
                     {/* The Frame/UI */}
                     <img
                         src="https://raw.githubusercontent.com/levim67/slingshot-survival-assets/main/loading%20ui.png"
@@ -54,20 +54,15 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
                     />
 
                     {/* The Fill Bar */}
-                    {/* Adjusting margin/padding to fit inside the frame. 
-                Assuming the frame has some thickness. 
-                I'll assume a 15px buffer from the edges roughly based on typical game UI assets.
-                Since "loading ui.png" is the container, I'll place the bar behind it or inside a bounded box.
-            */}
-                    <div className="absolute top-[28%] bottom-[28%] left-[2.5%] right-[2.5%] z-10 overflow-hidden rounded-full">
+                    <div className="absolute top-[15%] bottom-[15%] left-[3%] right-[3%] z-10 overflow-hidden rounded-full bg-slate-900/50">
                         <div
                             className="h-full bg-gradient-to-r from-orange-500 to-yellow-400 transition-all ease-linear"
                             style={{ width: `${progress}%` }}
                         />
                     </div>
 
-                    {/* Text percentage (Optional, keeps user informed) */}
-                    <div className="absolute z-30 font-black text-white text-xl drop-shadow-md">
+                    {/* Text percentage */}
+                    <div className="absolute z-30 font-black text-white text-lg drop-shadow-md pb-1">
                         {Math.floor(progress)}%
                     </div>
                 </div>
