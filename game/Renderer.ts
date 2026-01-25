@@ -7,15 +7,12 @@ export const renderGame = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
     const { width, height } = canvas;
 
     // --- CAMERA LERP ---
-    // --- CAMERA LERP ---
     const targetCamX = state.player.position.x;
-    // Lookahead for vertical movement (Falling/Jumping)
-    const lookaheadY = state.player.velocity.y * 0.3;
-    let targetCamY = state.player.position.y - 100 + lookaheadY;
+    let targetCamY = state.player.position.y - 100;
 
-    // Smooth lerp
-    state.camera.position.x += (targetCamX - state.camera.position.x) * 0.1;
-    state.camera.position.y += (targetCamY - state.camera.position.y) * 0.1;
+    // Slightly faster lerp for responsiveness without jitter
+    state.camera.position.x += (targetCamX - state.camera.position.x) * 0.12;
+    state.camera.position.y += (targetCamY - state.camera.position.y) * 0.12;
 
     // --- SETUP TRANSFORM ---
     const speed = mag(state.player.velocity);
