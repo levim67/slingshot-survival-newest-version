@@ -89,6 +89,9 @@ export const spawnChunkEntities = (state: GameState, startX: number, endX: numbe
             }
             if (!hitEntity) {
                 for (const e of state.world.entities) {
+                    // OPTIMIZATION: Ignore particles (debris, trails)
+                    if (e.type === 'particle' || e.type === 'floating_text' || e.type === 'shockwave') continue;
+
                     if (Math.abs(e.position.x - pos.x) < 200) {
                         if (dist(pos, e.position) < r + e.radius + 30) {
                             hitEntity = true;

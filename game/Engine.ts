@@ -88,7 +88,8 @@ export const updateGame = (state: GameState, dt: number, upgrades: Upgrades, cal
     const speed = mag(state.player.velocity);
     if (speed > 300 && state.utility.autoBounceState !== 'ACTIVE' && state.world.entities.length < 1200) {
         const density = Math.min(1.0, speed / 2000);
-        if (Math.random() < 0.6 + density * 0.4) {
+        // OPTIMIZATION: Reduced spawn rate (was 0.6 + 0.4)
+        if (Math.random() < 0.2 + density * 0.3) {
             const angle = Math.atan2(state.player.velocity.y, state.player.velocity.x) + Math.PI;
             const spread = 0.4;
             const isSmoke = Math.random() < 0.3;
