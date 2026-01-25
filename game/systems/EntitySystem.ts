@@ -4,12 +4,13 @@ import { add, mult, mag, normalize, sub, randomRange, dist } from '../../utils/p
 import { GRAVITY, LAVA_LEVEL } from '../../utils/constants';
 import * as audio from '../../utils/audio';
 import { addShake } from '../spawners/EffectSpawner';
-import { spawnExplosion, spawnDirectionalBurst } from './VFXSystem';
+import { spawnExplosion, spawnDirectionalBurst, spawnFieryExplosion } from './VFXSystem';
 import { destroyBall } from './CollisionSystem';
 import { handleWormSegmentDeath } from './BossSystem';
 
 /**
- * Explodes a bomb with massive particle effects and damages nearby entities
+ * Explodes a bomb with fiery particle effects and damages nearby entities
+ * VFX UPDATE: NO flash, NO shockwave - replaced with fiery embers
  */
 export const explodeBomb = (
     state: GameState,
@@ -18,65 +19,11 @@ export const explodeBomb = (
     entitiesToRemove: Set<string>
 ) => {
     const radius = upgrades.bombRadius;
-    addShake(state, 40);
+    addShake(state, 40); // Will be reduced by 90% in addShake function
     audio.playSFX('bomb_explode', 1.0);
 
-    const isCapped = state.world.entities.length > 1200;
-
-    // 1. Shockwave (Rapid expansion)
-    state.world.entities.push({
-        id: Math.random().toString(), type: 'shockwave',
-        position: { ...pos }, radius: radius * 0.5, velocity: { x: 0, y: 0 }, color: '#ffffff', lifeTime: 0.2
-    });
-
-    // 2. Blinding Flash Core
-    state.world.entities.push({
-        id: Math.random().toString(), type: 'particle',
-        position: { ...pos }, radius: 120, color: '#fffbeb', lifeTime: 0.1, scaleDecay: true
-    });
-
-    if (!isCapped) {
-        // 3. Dense Fireball (Center)
-        for (let i = 0; i < 40; i++) {
-            const a = randomRange(0, Math.PI * 2);
-            const d = randomRange(0, 40);
-            state.world.entities.push({
-                id: Math.random().toString(), type: 'particle',
-                position: { x: pos.x + Math.cos(a) * d, y: pos.y + Math.sin(a) * d },
-                velocity: { x: 0, y: 0 },
-                color: Math.random() > 0.5 ? '#f59e0b' : '#ef4444',
-                radius: randomRange(40, 70),
-                lifeTime: randomRange(0.4, 0.7),
-                scaleDecay: true,
-                shape: 'circle'
-            });
-        }
-
-        // 4. Expanding Debris/Fire
-        for (let i = 0; i < 60; i++) {
-            const a = randomRange(0, Math.PI * 2);
-            const s = randomRange(100, 600);
-            const col = Math.random() > 0.7 ? '#fee2e2' : (Math.random() > 0.4 ? '#fca5a5' : '#ef4444');
-            state.world.entities.push({
-                id: Math.random().toString(), type: 'particle', position: pos,
-                velocity: { x: Math.cos(a) * s, y: Math.sin(a) * s },
-                color: col, radius: randomRange(10, 25), lifeTime: randomRange(0.5, 1.0),
-                scaleDecay: true, drag: 0.9, gravity: true
-            });
-        }
-
-        // 5. Heavy Smoke Trails
-        for (let i = 0; i < 40; i++) {
-            const a = randomRange(0, Math.PI * 2);
-            const s = randomRange(50, 200);
-            state.world.entities.push({
-                id: Math.random().toString(), type: 'particle', shape: 'smoke',
-                position: add(pos, { x: randomRange(-30, 30), y: randomRange(-30, 30) }),
-                velocity: { x: Math.cos(a) * s, y: Math.sin(a) * s - 100 },
-                color: '#1f2937', radius: randomRange(30, 60), lifeTime: randomRange(1.5, 2.5)
-            });
-        }
-    }
+    // --- FIERY EXPLOSION (No flash, no shockwave) ---
+    spawnFieryExplosion(state, pos, 1.5); // Higher intensity for bombs
 
     // Damage Logic
     state.world.entities.forEach(e => {

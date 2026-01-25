@@ -15,10 +15,10 @@ export enum GameStateStatus {
   STATS = 'STATS',
 }
 
-export type BallTypeId = 
-  | 'red_common' | 'gold_rare' | 'cash_jackpot' 
-  | 'juice_refill' | 'pink_launch' | 'arrow_launch' 
-  | 'spike_normal' | 'spike_super' 
+export type BallTypeId =
+  | 'red_common' | 'gold_rare' | 'cash_jackpot'
+  | 'juice_refill' | 'pink_launch' | 'arrow_launch'
+  | 'spike_normal' | 'spike_super'
   | 'hazard_minus' | 'missile_battery' | 'black_hole'
   | 'friendly_missile' | 'mini_ball'
   | 'flame_enemy' | 'electric_enemy';
@@ -36,9 +36,9 @@ export interface BallDefinition {
   hasInnerDot?: boolean;
   symbol?: '+' | '-' | '$' | 'ARROW' | 'none';
   spikeStyle?: 'none' | 'normal' | 'super' | 'ultra';
-  isTarget?: boolean; 
-  isHazard?: boolean; 
-  lethalOnTouch?: boolean; 
+  isTarget?: boolean;
+  isHazard?: boolean;
+  lethalOnTouch?: boolean;
   destroyableByDirectHit?: boolean;
   points: number;
   moneyReward?: number;
@@ -47,7 +47,7 @@ export interface BallDefinition {
   specialEffect?: 'NONE' | 'RANDOM_LAUNCH' | 'ARROW_LAUNCH' | 'DRAIN_DROP' | 'SPAWN_MISSILES' | 'BLACK_HOLE' | 'FIREBALL' | 'LIGHTNING';
 }
 
-export type BossState = 
+export type BossState =
   | 'SPAWNING' | 'IDLE_VULNERABLE' | 'ALIGNING' | 'DASHING' | 'STUNNED' | 'SHOOTING' | 'SCATTER' | 'LIGHTNING_STORM' | 'FIRE_NOVA'
   | 'WORM_CHASE' | 'WORM_SPLIT';
 
@@ -57,8 +57,8 @@ export interface Entity {
   id: string;
   type: 'player' | 'ball' | 'missile' | 'fireball' | 'acid_spit' | 'friendly_missile' | 'friendly_fireball' | 'bomb' | 'particle' | 'shockwave' | 'floating_text' | 'wall' | 'boss' | 'lightning' | 'super_missile' | 'mini_super_missile' | 'shockwave_ring';
   position: Vector2;
-  radius: number; 
-  height?: number; 
+  radius: number;
+  height?: number;
   color: string;
   velocity?: Vector2;
   mass?: number;
@@ -73,114 +73,115 @@ export interface Entity {
   aimPosition?: Vector2;
   invulnerableTime?: number;
   bossData?: {
-      type: BossType;
-      maxHealth: number;
-      currentHealth: number;
-      state: BossState;
-      stateTimer: number;
-      attackCounter: number;
-      subStage?: number;
-      invincibilityTimer: number;
-      wormSegmentType?: 'HEAD' | 'BODY' | 'TAIL';
-      wormParentId?: string;
-      wormNextSegmentId?: string;
-      wormPrevSegmentId?: string;
+    type: BossType;
+    maxHealth: number;
+    currentHealth: number;
+    state: BossState;
+    stateTimer: number;
+    attackCounter: number;
+    subStage?: number;
+    invincibilityTimer: number;
+    wormSegmentType?: 'HEAD' | 'BODY' | 'TAIL';
+    wormParentId?: string;
+    wormNextSegmentId?: string;
+    wormPrevSegmentId?: string;
   };
   gravity?: boolean;
   isSpark?: boolean;
   scaleDecay?: boolean;
-  shape?: 'circle' | 'square' | 'smoke' | 'triangle';
+  shape?: 'circle' | 'square' | 'smoke' | 'triangle' | 'wedge';
   drag?: number;
   rotation?: number;
   angularVelocity?: number;
-  points?: Vector2[]; 
+  points?: Vector2[];
   text?: string;
   scale?: number;
+  isDebris?: boolean; // For VFX pooling system
   trail?: Vector2[]; // For visual trails
 }
 
 export interface Platform {
-    id: string;
-    position: Vector2; 
-    size: Vector2;     
-    type: 'start' | 'pillar';
+  id: string;
+  position: Vector2;
+  size: Vector2;
+  type: 'start' | 'pillar';
 }
 
 export interface LavaParticle {
-    x: number;
-    y: number;
-    vx: number;
-    vy: number;
-    life: number;
-    maxLife: number;
-    type: 'bubble' | 'spark';
-    size: number;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  life: number;
+  maxLife: number;
+  type: 'bubble' | 'spark';
+  size: number;
 }
 
 export interface GameState {
-    player: {
-      position: Vector2;
-      velocity: Vector2;
-      radius: number;
-      health: number;
-      mass: number;
-      onGround: boolean;
-      trail: Vector2[];
-    };
-    camera: {
-      position: Vector2;
-      zoom: number;
-      shake: number;
-    };
-    input: {
-      isDragging: boolean;
-      startPos: Vector2;
-      currentPos: Vector2;
-      pointerId: number;
-    };
-    world: {
-      entities: Entity[];
-      platforms: Platform[];
-      lavaParticles: LavaParticle[];
-      lavaOffset: number;
-    };
-    worldGen: {
-        nextRightX: number;
-        nextLeftX: number;
-    };
-    combo: {
-        multiplier: number;
-        timer: number;
-    };
-    time: {
-      scale: number;
-      lastFrame: number;
-      aliveDuration: number;
-    };
-    boss: {
-        nextSpawnTime: number;
-        active: boolean;
-        lastHealth: number;
-        maxHealth: number;
-        cycleCount: number;
-    };
-    visuals: {
-        aimLerp: number;
-        time: number;
-    };
-    utility: {
-        autoBounceState: 'OFF' | 'ACTIVE';
-        activeTimer: number;
-        charge: number;
-        targetSearchTimer: number;
-        currentTargetId: string | null;
-        missileTimer: number;
-        fireballTimer: number;
-        bombTimer: number;
-        lastHudUpdate: { unlocked: boolean, charge: number, active: boolean, time: number, bossHp: number };
-    };
-    score: number;
-    distanceRecord: number;
+  player: {
+    position: Vector2;
+    velocity: Vector2;
+    radius: number;
+    health: number;
+    mass: number;
+    onGround: boolean;
+    trail: Vector2[];
+  };
+  camera: {
+    position: Vector2;
+    zoom: number;
+    shake: number;
+  };
+  input: {
+    isDragging: boolean;
+    startPos: Vector2;
+    currentPos: Vector2;
+    pointerId: number;
+  };
+  world: {
+    entities: Entity[];
+    platforms: Platform[];
+    lavaParticles: LavaParticle[];
+    lavaOffset: number;
+  };
+  worldGen: {
+    nextRightX: number;
+    nextLeftX: number;
+  };
+  combo: {
+    multiplier: number;
+    timer: number;
+  };
+  time: {
+    scale: number;
+    lastFrame: number;
+    aliveDuration: number;
+  };
+  boss: {
+    nextSpawnTime: number;
+    active: boolean;
+    lastHealth: number;
+    maxHealth: number;
+    cycleCount: number;
+  };
+  visuals: {
+    aimLerp: number;
+    time: number;
+  };
+  utility: {
+    autoBounceState: 'OFF' | 'ACTIVE';
+    activeTimer: number;
+    charge: number;
+    targetSearchTimer: number;
+    currentTargetId: string | null;
+    missileTimer: number;
+    fireballTimer: number;
+    bombTimer: number;
+    lastHudUpdate: { unlocked: boolean, charge: number, active: boolean, time: number, bossHp: number };
+  };
+  score: number;
+  distanceRecord: number;
 }
 
 export interface PlayerStats {
@@ -192,24 +193,24 @@ export interface PlayerStats {
 }
 
 export interface Upgrades {
-  maxHealth: number;       
-  slowMoTimeScale: number; 
-  speedMultiplier: number; 
-  maxComboCap: number;     
-  missileChanceInterval: number; 
-  missileCap: number;            
-  fireballChance: number;        
-  bombChance: number;            
-  bombRadius: number;            
-  splitChance: number;           
-  splitCount: number;            
-  bounceMissileChance: number;   
-  bounceMissileCount: number;    
-  autoBounceDuration: number;    
-  autoBounceChargePerHit: number; 
-  spikeDestroyChance: number;     
-  chainLightningChance: number;   
-  chainLightningCount: number;    
+  maxHealth: number;
+  slowMoTimeScale: number;
+  speedMultiplier: number;
+  maxComboCap: number;
+  missileChanceInterval: number;
+  missileCap: number;
+  fireballChance: number;
+  bombChance: number;
+  bombRadius: number;
+  splitChance: number;
+  splitCount: number;
+  bounceMissileChance: number;
+  bounceMissileCount: number;
+  autoBounceDuration: number;
+  autoBounceChargePerHit: number;
+  spikeDestroyChance: number;
+  chainLightningChance: number;
+  chainLightningCount: number;
   unlockGreenSpikeBreaker: boolean;
   unlockRedSpikeBreaker: boolean;
   unlockParagonSuperMissile: boolean;
@@ -220,18 +221,18 @@ export interface UpgradeItemDef {
   name: string;
   description: string;
   category: 'ESSENTIALS' | 'UTILITY' | 'PERMANENT' | 'PARAGON';
-  stat: keyof Upgrades; 
+  stat: keyof Upgrades;
   baseValue: number;
   increment: number;
-  maxLevel: number; 
-  costs: number[]; 
+  maxLevel: number;
+  costs: number[];
   iconType: 'health' | 'time' | 'speed' | 'combo' | 'missile' | 'split' | 'bounce_missile' | 'auto_bounce' | 'spike' | 'lightning' | 'fire' | 'bomb' | 'paragon';
   secondaryStat?: keyof Upgrades;
   secondaryBase?: number;
   secondaryIncrement?: number;
 }
 
-const TIER_COSTS = [100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000]; 
+const TIER_COSTS = [100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000];
 
 export const UPGRADE_ITEMS: UpgradeItemDef[] = [
   { id: 'more_juice', name: 'More Juice', description: 'Increases Max Juice Capacity', category: 'ESSENTIALS', stat: 'maxHealth', baseValue: 100, increment: 25, maxLevel: 9, costs: TIER_COSTS, iconType: 'health' },

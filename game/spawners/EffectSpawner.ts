@@ -36,23 +36,28 @@ export const spawnShockwaveRing = (state: GameState, pos: Vector2, radius: numbe
 };
 
 /**
- * Adds camera shake (capped at 50)
+ * Adds camera shake (extremely subtle, capped at 5)
+ * VFX UPDATE: Reduced shake intensity by 90%
  */
 export const addShake = (state: GameState, amount: number) => {
-    state.camera.shake = Math.min(state.camera.shake + amount, 50);
+    // Reduce all shake by 90% and cap very low
+    const reducedAmount = amount * 0.1;
+    state.camera.shake = Math.min(state.camera.shake + reducedAmount, 5);
 };
 
 /**
  * Finds the best target for auto-aim (missiles, auto-bounce)
+ * NOTE: Auto-bounce should NOT target bosses
  */
-export const findBestTarget = (state: GameState): Entity | null => {
+export const findBestTarget = (state: GameState, includeBosses: boolean = false): Entity | null => {
     let best: Entity | null = null;
     let minScore = -Infinity;
 
-    const candidates = state.world.entities.filter(e =>
-        (e.type === 'ball' && e.ballDef?.isTarget) ||
-        (e.type === 'boss' && (e.bossData?.type === 'CUBE_OVERLORD' || e.bossData?.wormSegmentType === 'HEAD'))
-    );
+    const candidates = state.world.entities.filter(e => {
+        if (e.type === 'ball' && e.ballDef?.isTarget) return true;
+        if (includeBosses && e.type === 'boss' && (e.bossData?.type === 'CUBE_OVERLORD' || e.bossData?.wormSegmentType === 'HEAD')) return true;
+        return false;
+    });
 
     for (const e of candidates) {
         const d = Math.sqrt((state.player.position.x - e.position.x) ** 2 + (state.player.position.y - e.position.y) ** 2);
