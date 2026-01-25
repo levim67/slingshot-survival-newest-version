@@ -274,6 +274,13 @@ const App: React.FC = () => {
           }}
         />
       )}
+
+      {/* PORTRAIT WARNING */}
+      <div className="hidden portrait:flex fixed inset-0 z-[200] bg-black flex-col items-center justify-center p-8 text-center text-white">
+        <div className="text-6xl animate-bounce mb-4">📱↻</div>
+        <h2 className="text-3xl font-black text-orange-500 mb-2">PLEASE ROTATE</h2>
+        <p className="text-gray-400">Slingshot Survival is designed for Landscape Mode.</p>
+      </div>
     </div>
   );
 };

@@ -1,24 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <title>Slingshot Survival</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-      body {
-        margin: 0;
-        overflow: hidden;
-        background-color: #0f172a; /* Slate 900 */
-        touch-action: none; /* Prevent browser scrolling on mobile */
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        -webkit-user-select: none;
-        user-select: none;
-      }
-      canvas {
-        display: block;
-      }
-    </style>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Slingshot Survival</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: #0f172a;
+      /* Slate 900 */
+      touch-action: none;
+      /* Prevent browser scrolling on mobile */
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    canvas {
+      display: block;
+    }
+  </style>
   <script type="importmap">
 {
   "imports": {
@@ -29,9 +34,15 @@
   }
 }
 </script>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/levim67/slingshot-survival-assets/main/bomb.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/main.tsx"></script>
-  </body>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/main.tsx"></script>
+</body>
+
 </html>

@@ -1,0 +1,21 @@
+{
+    "name": "Slingshot Survival",
+    "short_name": "Slingshot",
+    "start_url": ".",
+    "display": "standalone",
+    "orientation": "landscape",
+    "background_color": "#0f172a",
+    "theme_color": "#0f172a",
+    "icons": [
+        {
+            "src": "https://raw.githubusercontent.com/levim67/slingshot-survival-assets/main/bomb.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "https://raw.githubusercontent.com/levim67/slingshot-survival-assets/main/bomb.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
