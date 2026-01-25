@@ -1,0 +1,220 @@
+
+import { GameState, Entity, Upgrades, Vector2 } from '../../types';
+import { add, sub, mult, mag, normalize, dist, randomRange } from '../../utils/physics';
+import { GRAVITY, BALL_DEFINITIONS } from '../../utils/constants';
+import * as audio from '../../utils/audio';
+import { spawnFloatingText, addShake } from '../spawners/EffectSpawner';
+import { spawnExplosion, spawnDirectionalBurst } from './VFXSystem';
+import { spawnAcidSpit } from '../spawners/ProjectileSpawner';
+import { killBoss } from '../spawners/BossSpawner';
+
+/**
+ * Updates Cube Overlord boss AI state machine
+ */
+export const updateCubeBossAI = (state: GameState, boss: Entity, dt: number) => {
+    if (!boss.bossData) return;
+    const data = boss.bossData;
+    const toPlayer = sub(state.player.position, boss.position);
+    const distToPlayer = mag(toPlayer);
+
+    // OFF-SCREEN CATCHUP MECHANIC
+    if (distToPlayer > 1500) {
+        if (data.state === 'SHOOTING' || data.state === 'FIRE_NOVA' || data.state === 'LIGHTNING_STORM' || data.state === 'ALIGNING') {
+            data.state = 'IDLE_VULNERABLE';
+            data.stateTimer = 2.0;
+        }
+    }
+
+    data.stateTimer -= dt;
+    if (data.invincibilityTimer > 0) data.invincibilityTimer -= dt;
+
+    switch (data.state) {
+        case 'SPAWNING':
+            boss.velocity = { x: 0, y: 20 };
+            if (data.stateTimer <= 0) { data.state = 'ALIGNING'; data.stateTimer = 1.5; }
+            break;
+        case 'IDLE_VULNERABLE':
+            const target = { x: state.player.position.x, y: state.player.position.y - 400 };
+            const lerpFactor = distToPlayer > 1000 ? 5 : 2;
+            const boost = distToPlayer > 2000 ? 10 : lerpFactor;
+
+            boss.position.x += (target.x - boss.position.x) * boost * dt;
+            boss.position.y += (target.y - boss.position.y) * boost * dt;
+            boss.rotation = (boss.rotation || 0) + 1 * dt;
+            if (data.stateTimer <= 0) { data.state = 'ALIGNING'; data.stateTimer = 1.0; audio.playSFX('charge', 0.8); }
+            break;
+        case 'ALIGNING':
+            boss.velocity = { x: 0, y: 0 };
+            boss.position.x += randomRange(-5, 5);
+            boss.position.y += randomRange(-5, 5);
+            if (data.stateTimer <= 0) {
+                const r = Math.random();
+                if (r < 0.25) { data.state = 'SHOOTING'; data.stateTimer = 1.2; }
+                else if (r < 0.5) { data.state = 'DASHING'; data.stateTimer = 0.8; boss.velocity = mult(normalize(toPlayer), 2200); audio.playSFX('boss_roar', 1.0); }
+                else if (r < 0.75) { data.state = 'LIGHTNING_STORM'; data.stateTimer = 0.5; data.subStage = 5; audio.playSFX('electric_charge', 1.0); }
+                else { data.state = 'FIRE_NOVA'; data.stateTimer = 1.5; audio.playSFX('charge', 1.0); }
+            }
+            break;
+        case 'DASHING':
+            boss.rotation = (boss.rotation || 0) + 15 * dt;
+            boss.position = add(boss.position, mult(boss.velocity || { x: 0, y: 0 }, dt));
+            if (data.stateTimer <= 0) {
+                boss.velocity = mult(boss.velocity || { x: 0, y: 0 }, 0.1);
+                data.attackCounter++;
+                if (data.attackCounter >= 4) { data.attackCounter = 0; data.state = 'IDLE_VULNERABLE'; data.stateTimer = 4.0; }
+                else { data.state = 'ALIGNING'; data.stateTimer = 0.5; }
+            }
+            break;
+        case 'SHOOTING':
+            boss.rotation = Math.atan2(toPlayer.y, toPlayer.x);
+            if (data.stateTimer <= 0) {
+                for (let i = 0; i < 7; i++) {
+                    const a = boss.rotation - 0.6 + (1.2 * (i / 6));
+                    state.world.entities.push({
+                        id: `boss_m_${Math.random()}`, type: 'missile', targetId: 'player',
+                        position: { ...boss.position }, velocity: { x: Math.cos(a) * 700, y: Math.sin(a) * 700 },
+                        radius: 15, color: '#ef4444', lifeTime: 6.0
+                    });
+                }
+                audio.playSFX('launch', 1.0);
+                spawnDirectionalBurst(state, boss.position, { x: Math.cos(boss.rotation), y: Math.sin(boss.rotation) }, 20, 300);
+                data.attackCounter++;
+                if (data.attackCounter >= 4) { data.attackCounter = 0; data.state = 'IDLE_VULNERABLE'; data.stateTimer = 4.0; }
+                else { data.state = 'ALIGNING'; data.stateTimer = 0.8; }
+            }
+            break;
+        case 'FIRE_NOVA':
+            boss.rotation = (boss.rotation || 0) + 20 * dt;
+            if (data.stateTimer <= 0) {
+                for (let i = 0; i < 12; i++) {
+                    const a = (Math.PI * 2 * i) / 12;
+                    state.world.entities.push({
+                        id: `boss_f_${Math.random()}`, type: 'fireball', targetId: 'player',
+                        position: { ...boss.position }, velocity: { x: Math.cos(a) * 600, y: Math.sin(a) * 600 },
+                        radius: 20, color: '#f97316', lifeTime: 5.0
+                    });
+                }
+                audio.playSFX('fireball', 1.0);
+                spawnExplosion(state, boss.position, '#f97316', '#fbbf24', { x: 0, y: 0 });
+                data.attackCounter++;
+                if (data.attackCounter >= 4) { data.attackCounter = 0; data.state = 'IDLE_VULNERABLE'; data.stateTimer = 4.0; }
+                else { data.state = 'ALIGNING'; data.stateTimer = 0.8; }
+            }
+            break;
+        case 'LIGHTNING_STORM':
+            if (data.stateTimer <= 0) {
+                if (data.subStage && data.subStage > 0) {
+                    state.world.entities.push({
+                        id: `boss_s_${Math.random()}`, type: 'ball',
+                        ballType: 'electric_enemy', ballDef: BALL_DEFINITIONS['electric_enemy'],
+                        position: { x: state.player.position.x + randomRange(-100, 100), y: state.player.position.y - 400 },
+                        radius: 1, color: 'transparent', velocity: { x: 0, y: 0 },
+                        attackCharge: 1.0, lifeTime: 2.0, aimPosition: state.player.position
+                    });
+                    data.subStage--; data.stateTimer = 0.4;
+                } else {
+                    data.attackCounter++;
+                    if (data.attackCounter >= 4) { data.attackCounter = 0; data.state = 'IDLE_VULNERABLE'; data.stateTimer = 4.0; }
+                    else { data.state = 'ALIGNING'; data.stateTimer = 0.8; }
+                }
+            }
+            break;
+    }
+};
+
+/**
+ * Updates Worm Devourer boss AI - head chasing and body following
+ */
+export const updateWormAI = (state: GameState, segments: Entity[], dt: number) => {
+    const heads = segments.filter(e => e.bossData?.wormSegmentType === 'HEAD');
+    heads.forEach(head => {
+        if (!head.bossData) return;
+        if (head.bossData.invincibilityTimer > 0) head.bossData.invincibilityTimer -= dt;
+        const toPlayer = sub(state.player.position, head.position);
+
+        // RUBBER BAND CATCHUP
+        const distToPlayer = mag(toPlayer);
+        let moveSpeed = 900;
+        let turnSpeed = 4.0;
+
+        if (distToPlayer > 1500) {
+            moveSpeed = 2500;
+            turnSpeed = 8.0;
+        }
+        if (distToPlayer > 3000) {
+            moveSpeed = 4000;
+            turnSpeed = 15.0;
+        }
+
+        const wave = Math.sin(state.visuals.time * 3 + head.id.charCodeAt(0)) * 300;
+        const idealDir = normalize(toPlayer);
+        const desiredVel = mult(idealDir, moveSpeed);
+        desiredVel.y += wave;
+
+        const steer = turnSpeed * dt;
+        const currentVel = head.velocity || { x: 0, y: 0 };
+        head.velocity = {
+            x: currentVel.x + (desiredVel.x - currentVel.x) * steer,
+            y: currentVel.y + (desiredVel.y - currentVel.y) * steer
+        };
+        head.rotation = Math.atan2(head.velocity.y, head.velocity.x);
+        head.position = add(head.position, mult(head.velocity, dt));
+
+        if (Math.random() < 0.04) spawnAcidSpit(state, head.position, state.player.position);
+    });
+
+    const bodies = segments.filter(e => e.bossData?.wormSegmentType !== 'HEAD');
+    bodies.forEach(seg => {
+        if (!seg.bossData) return;
+        if (seg.bossData.invincibilityTimer > 0) seg.bossData.invincibilityTimer -= dt;
+        const leader = segments.find(e => e.id === seg.bossData?.wormPrevSegmentId);
+        if (leader) {
+            const d = dist(leader.position, seg.position);
+            if (d > 55) {
+                const dir = normalize(sub(leader.position, seg.position));
+                seg.position = add(seg.position, mult(dir, (d - 55) * 10 * dt));
+                seg.rotation = Math.atan2(dir.y, dir.x);
+            }
+        } else {
+            seg.velocity = add(seg.velocity || { x: 0, y: 0 }, { x: 0, y: GRAVITY * dt });
+            seg.position = add(seg.position, mult(seg.velocity || { x: 0, y: 0 }, dt));
+        }
+        if (Math.random() < 0.002) spawnAcidSpit(state, seg.position, state.player.position);
+    });
+};
+
+/**
+ * Handles the death of a worm segment
+ */
+export const handleWormSegmentDeath = (state: GameState, segment: Entity, entitiesToRemove: Set<string>, upgrades: Upgrades) => {
+    spawnExplosion(state, segment.position, '#a3e635', '#3f6212', segment.velocity || { x: 0, y: 0 });
+    audio.playSFX('break');
+    entitiesToRemove.add(segment.id);
+
+    const prevId = segment.bossData?.wormPrevSegmentId;
+    const nextId = segment.bossData?.wormNextSegmentId;
+
+    if (prevId) {
+        const prev = state.world.entities.find(e => e.id === prevId);
+        if (prev && prev.bossData) prev.bossData.wormNextSegmentId = nextId;
+    }
+    if (nextId) {
+        const next = state.world.entities.find(e => e.id === nextId);
+        if (next && next.bossData) {
+            next.bossData.wormPrevSegmentId = prevId;
+            if (segment.bossData?.wormSegmentType === 'HEAD') {
+                next.bossData.wormSegmentType = 'HEAD';
+                next.color = '#a3e635';
+                next.radius = 60;
+            }
+        }
+    }
+
+    const remaining = state.world.entities.filter(e =>
+        e.type === 'boss' && e.bossData?.type === 'WORM_DEVOURER' && !entitiesToRemove.has(e.id)
+    );
+    if (remaining.length <= 1) {
+        killBoss(state, segment, upgrades);
+        remaining.forEach(r => entitiesToRemove.add(r.id));
+    }
+};
