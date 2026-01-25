@@ -1,5 +1,6 @@
-import React from 'react';
-import { Play, ShoppingBag, Settings, BarChart2, Zap, Coins } from 'lucide-react';
+import React, { useState } from 'react';
+import { Play, ShoppingBag, Settings, BarChart2, Zap, Coins, X, Music, Volume2 } from 'lucide-react';
+import * as audio from '../../utils/audio';
 
 interface MainMenuProps {
     onStart: () => void;
@@ -10,6 +11,10 @@ interface MainMenuProps {
 }
 
 const MainMenu: React.FC<MainMenuProps> = ({ onStart, onOpenShop, totalCoins, cameraZoom, setCameraZoom }) => {
+    const [showSettings, setShowSettings] = useState(false);
+    const [musicVol, setMusicVol] = useState(0.5);
+    const [sfxVol, setSFXVol] = useState(0.8);
+
     return (
         <div className="absolute inset-0 flex flex-col bg-slate-900/95 z-30 backdrop-blur-sm font-sans text-white">
 
@@ -65,7 +70,10 @@ const MainMenu: React.FC<MainMenuProps> = ({ onStart, onOpenShop, totalCoins, ca
 
             {/* FOOTER / SETTINGS */}
             <div className="w-full p-8 flex justify-center gap-8 text-white/40">
-                <button className="flex flex-col items-center gap-1 hover:text-white transition-colors">
+                <button
+                    onClick={() => setShowSettings(true)}
+                    className="flex flex-col items-center gap-1 hover:text-white transition-colors"
+                >
                     <Settings size={24} />
                     <span className="text-[10px] font-bold uppercase tracking-widest">Settings</span>
                 </button>
@@ -74,6 +82,62 @@ const MainMenu: React.FC<MainMenuProps> = ({ onStart, onOpenShop, totalCoins, ca
                     <span className="text-[10px] font-bold uppercase tracking-widest">Stats</span>
                 </button>
             </div>
+
+            {/* SETTINGS MODAL */}
+            {showSettings && (
+                <div className="absolute inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-6">
+                    <div className="w-full max-w-sm bg-slate-900 border border-white/10 rounded-2xl p-6 shadow-2xl animate-in fade-in zoom-in duration-300">
+                        <div className="flex justify-between items-center mb-8">
+                            <h3 className="text-xl font-black italic uppercase tracking-wider text-white">Settings</h3>
+                            <button onClick={() => setShowSettings(false)} className="bg-white/10 p-2 rounded-full hover:bg-white/20">
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="flex flex-col gap-8">
+                            {/* MUSIC VOLUME */}
+                            <div className="flex flex-col gap-2">
+                                <div className="flex justify-between text-sm font-bold text-cyan-400 uppercase tracking-widest">
+                                    <span className="flex items-center gap-2"><Music size={16} /> Music</span>
+                                    <span>{Math.round(musicVol * 100)}%</span>
+                                </div>
+                                <input
+                                    type="range" min="0" max="1" step="0.05"
+                                    value={musicVol}
+                                    onChange={(e) => {
+                                        const v = parseFloat(e.target.value);
+                                        setMusicVol(v);
+                                        audio.setMusicVolume(v);
+                                    }}
+                                    className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+                                />
+                            </div>
+
+                            {/* SFX VOLUME */}
+                            <div className="flex flex-col gap-2">
+                                <div className="flex justify-between text-sm font-bold text-yellow-500 uppercase tracking-widest">
+                                    <span className="flex items-center gap-2"><Volume2 size={16} /> SFX</span>
+                                    <span>{Math.round(sfxVol * 100)}%</span>
+                                </div>
+                                <input
+                                    type="range" min="0" max="1" step="0.05"
+                                    value={sfxVol}
+                                    onChange={(e) => {
+                                        const v = parseFloat(e.target.value);
+                                        setSFXVol(v);
+                                        audio.setSFXVolume(v);
+                                    }}
+                                    className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-yellow-400"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="mt-8 pt-8 border-t border-white/10 text-center">
+                            <p className="text-xs text-white/30 uppercase tracking-widest">Build v0.4.2 (Beta)</p>
+                        </div>
+                    </div>
+                </div>
+            )}
 
         </div>
     );

@@ -9,6 +9,18 @@ let bgmSource: AudioBufferSourceNode | null = null;
 let bgmBuffer: AudioBuffer | null = null;
 
 const IS_MUTED = false;
+let globalMusicVol = 0.5;
+let globalSFXVol = 0.8;
+
+export const setMusicVolume = (v: number) => {
+    globalMusicVol = v;
+    if (musicGain && ctx) musicGain.gain.setTargetAtTime(v, ctx.currentTime, 0.1);
+};
+
+export const setSFXVolume = (v: number) => {
+    globalSFXVol = v;
+    if (sfxGain && ctx) sfxGain.gain.setTargetAtTime(v, ctx.currentTime, 0.1);
+};
 
 export const initAudio = async () => {
     if (ctx) return;
@@ -31,11 +43,11 @@ export const initAudio = async () => {
 
     // Busses
     musicGain = ctx.createGain();
-    musicGain.gain.value = 0.6;
+    musicGain.gain.value = globalMusicVol;
     musicGain.connect(masterGain);
 
     sfxGain = ctx.createGain();
-    sfxGain.gain.value = 0.8;
+    sfxGain.gain.value = globalSFXVol;
     sfxGain.connect(masterGain);
 
     // Load Custom Music
@@ -76,10 +88,10 @@ export const updateAudioState = (timeScale: number, isHighEnergy: boolean) => {
         targetFreq = 24000;
     } else {
         // Normal / Slow Mo Logic
-        // Clamp to minimum 0.1 to prevent stopping completely
-        targetRate = Math.max(0.1, timeScale);
-        // Filter cutoff: 20k at full speed, 400Hz at slow speed (underwater feel)
-        targetFreq = 400 + (20000 * Math.pow(timeScale, 3));
+        // Clamp to minimum 0.5 to prevent stopping completely
+        targetRate = Math.max(0.5, timeScale);
+        // Filter cutoff: 20k at full speed, 600Hz at slow speed (underwater feel)
+        targetFreq = 600 + (20000 * Math.pow(timeScale, 3));
     }
 
     // Ramp playback rate

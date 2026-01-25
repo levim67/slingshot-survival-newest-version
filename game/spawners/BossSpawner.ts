@@ -10,7 +10,7 @@ import { spawnExplosion } from '../systems/VFXSystem';
  * Spawns the Cube Overlord boss
  */
 export const spawnCubeBoss = (state: GameState) => {
-    const maxHp = 50000;
+    const maxHp = 30000;
     state.boss.maxHealth = maxHp;
     const spawnY = state.player.position.y - 600;
     spawnFloatingText(state, { x: state.player.position.x, y: spawnY + 200 }, "WARNING: CUBE OVERLORD", '#ff0000');
@@ -32,7 +32,7 @@ export const spawnCubeBoss = (state: GameState) => {
  */
 export const spawnWormBoss = (state: GameState) => {
     const segments = 15;
-    const hpPerSeg = 20000;
+    const hpPerSeg = 3500;
     state.boss.maxHealth = segments * hpPerSeg;
     spawnFloatingText(state, { x: state.player.position.x, y: state.player.position.y - 400 }, "WARNING: THE DEVOURER AWAKENS", '#a3e635');
     audio.playSFX('boss_roar');
@@ -69,7 +69,7 @@ export const spawnWormBoss = (state: GameState) => {
  * Spawns the Triangle Architect boss
  */
 export const spawnTriangleBoss = (state: GameState) => {
-    const maxHp = 80000;
+    const maxHp = 65000;
     state.boss.maxHealth = maxHp;
     const spawnY = state.player.position.y - 600;
     spawnFloatingText(state, { x: state.player.position.x, y: spawnY + 200 }, "WARNING: ARCHITECT DETECTED", '#06b6d4');

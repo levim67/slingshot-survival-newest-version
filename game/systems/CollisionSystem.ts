@@ -64,7 +64,7 @@ export const handleBossCollision = (
                 state.player.velocity = add(state.player.velocity, mult(pushDir, 500 * dt));
                 state.player.position = add(state.player.position, mult(pushDir, 5));
             } else {
-                const dmg = 150 * state.combo.multiplier;
+                const dmg = 250 * state.combo.multiplier;
                 entity.bossData.currentHealth -= dmg;
                 entity.bossData.invincibilityTimer = 0.4;
 

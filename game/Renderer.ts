@@ -7,17 +7,25 @@ export const renderGame = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
     const { width, height } = canvas;
 
     // --- CAMERA LERP ---
+    // --- CAMERA LERP ---
     const targetCamX = state.player.position.x;
-    let targetCamY = state.player.position.y - 100;
+    // Lookahead for vertical movement (Falling/Jumping)
+    const lookaheadY = state.player.velocity.y * 0.3;
+    let targetCamY = state.player.position.y - 100 + lookaheadY;
+
+    // Smooth lerp
     state.camera.position.x += (targetCamX - state.camera.position.x) * 0.1;
     state.camera.position.y += (targetCamY - state.camera.position.y) * 0.1;
 
     // --- SETUP TRANSFORM ---
-    const speedFactor = Math.min(mag(state.player.velocity) / 3000, 1.0);
+    const speed = mag(state.player.velocity);
+    const speedFactor = Math.min(speed / 2000, 1.0); // Reach max zoom out faster (was 3000)
     const dragFactor = state.input.isDragging ? 1.0 : 0.0;
-    const targetZoomOffset = (speedFactor * 0.2) + (dragFactor * 0.15);
+
+    // Increased zoom out range (0.2 -> 0.35)
+    const targetZoomOffset = (speedFactor * 0.35) + (dragFactor * 0.15);
     const effectiveZoom = Math.max(0.3, baseZoom - targetZoomOffset);
-    state.camera.zoom += (effectiveZoom - state.camera.zoom) * 0.1;
+    state.camera.zoom += (effectiveZoom - state.camera.zoom) * 0.05; // Slower zoom for smoothness
     const zoom = state.camera.zoom;
 
     const shakeX = (Math.random() - 0.5) * state.camera.shake;
@@ -398,6 +406,26 @@ export const renderGame = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
                 }
             }
         }
+        else if (e.type === 'wall') {
+            const w = e.width || 100;
+            const h = e.height || 100;
+
+            // Dynamic Pulse
+            const pulse = 1 + Math.sin(state.visuals.time * 5) * 0.05;
+            ctx.scale(pulse, pulse);
+
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = e.color;
+            ctx.fillStyle = e.color;
+            ctx.fillRect(-w / 2, -h / 2, w, h);
+
+            // Inner Bright
+            ctx.fillStyle = '#ffffff';
+            ctx.globalAlpha = 0.3;
+            ctx.fillRect(-w / 2 + 5, -h / 2 + 5, w - 10, h - 10);
+            ctx.globalAlpha = 1.0;
+            ctx.shadowBlur = 0;
+        }
         else if (e.type === 'particle' || e.type === 'shockwave' || e.type === 'lightning' || e.type === 'shockwave_ring') {
             // OPTIMIZATION: NO SHADOW BLUR FOR PARTICLES
             ctx.globalCompositeOperation = 'lighter';
@@ -647,6 +675,60 @@ const renderBoss = (ctx: CanvasRenderingContext2D, boss: Entity, time: number) =
         }
 
         ctx.globalAlpha = 1;
+
+    } else if (boss.bossData?.type === 'TRIANGLE_ARCHITECT') {
+        // ===== TRIANGLE ARCHITECT =====
+        const r = boss.radius;
+        const col = boss.color;
+
+        ctx.shadowColor = col;
+        ctx.shadowBlur = 20;
+
+        // Main Triangle
+        ctx.beginPath();
+        const sides = 3;
+        for (let i = 0; i < sides; i++) {
+            const a = (i / sides) * Math.PI * 2 - Math.PI / 2; // Point up
+            ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+        }
+        ctx.closePath();
+
+        ctx.fillStyle = '#0f172a'; // Dark Core
+        ctx.fill();
+        ctx.lineWidth = 5;
+        ctx.strokeStyle = col;
+        ctx.stroke();
+
+        // Inner Rotating Triangle
+        ctx.save();
+        ctx.rotate(time * 2);
+        ctx.beginPath();
+        for (let i = 0; i < sides; i++) {
+            const a = (i / sides) * Math.PI * 2 + Math.PI / 2; // Inverted
+            ctx.lineTo(Math.cos(a) * r * 0.4, Math.sin(a) * r * 0.4);
+        }
+        ctx.closePath();
+        ctx.fillStyle = '#fff';
+        ctx.fill();
+        ctx.restore();
+
+        // Orbiting Nodes
+        for (let i = 0; i < 3; i++) {
+            const a = time + (i * Math.PI * 2 / 3);
+            const dist = r * 1.4;
+            ctx.beginPath();
+            ctx.arc(Math.cos(a) * dist, Math.sin(a) * dist, 5, 0, Math.PI * 2);
+            ctx.fillStyle = col;
+            ctx.fill();
+
+            // Connect to center
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(Math.cos(a) * dist, Math.sin(a) * dist);
+            ctx.strokeStyle = `rgba(6, 182, 212, 0.3)`;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
 
     } else {
         // ===== CUBE OVERLORD - VFX UPGRADED =====
