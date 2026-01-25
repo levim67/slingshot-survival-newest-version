@@ -42,28 +42,28 @@ export const spawnExplosion = (state: GameState, pos: Vector2, c1: string, c2: s
     const lod = getDistanceLOD(state, pos);
 
     // Reduce particle counts based on LOD and global budget
-    const budgetRatio = Math.max(0.3, 1 - (currentDebris / MAX_ACTIVE_DEBRIS));
+    const budgetRatio = Math.max(0.4, 1 - (currentDebris / MAX_ACTIVE_DEBRIS));
 
     // --- NO FLASH (removed) ---
 
     // --- PHASE 1: QUICK BURST - Large Chunks (curved wedges) ---
-    const largeChunkCount = lod === 2 ? 1 : (lod === 1 ? 2 : Math.floor(3 * budgetRatio));
+    const largeChunkCount = lod === 2 ? 2 : (lod === 1 ? 4 : Math.floor(6 * budgetRatio));
     for (let i = 0; i < largeChunkCount; i++) {
         const angle = randomRange(0, Math.PI * 2);
-        const speed = randomRange(150, 300); // Initial burst speed
+        const speed = randomRange(200, 400); // Faster initial burst
 
         state.world.entities.push({
             id: `debris_lg_${Math.random()}`,
             type: 'particle',
             isDebris: true,
             position: { ...pos },
-            radius: randomRange(12, 20),
+            radius: randomRange(15, 25), // Larger chunks
             color: c1,
             velocity: { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed },
-            lifeTime: randomRange(0.5, 0.9), // Phase 2: slow cascade
+            lifeTime: randomRange(0.6, 1.0), // Longer visible
             gravity: true,
-            drag: 0.94, // High drag for slow falloff
-            angularVelocity: randomRange(-8, 8),
+            drag: 0.92, // Slower drag
+            angularVelocity: randomRange(-10, 10),
             shape: 'wedge',
             rotation: randomRange(0, Math.PI * 2),
             scaleDecay: true
@@ -71,47 +71,48 @@ export const spawnExplosion = (state: GameState, pos: Vector2, c1: string, c2: s
     }
 
     // --- Medium Shards (triangles) ---
-    const mediumShardCount = lod === 2 ? 2 : (lod === 1 ? 4 : Math.floor(6 * budgetRatio));
+    const mediumShardCount = lod === 2 ? 3 : (lod === 1 ? 6 : Math.floor(10 * budgetRatio));
     for (let i = 0; i < mediumShardCount; i++) {
         const angle = randomRange(0, Math.PI * 2);
-        const speed = randomRange(100, 250);
+        const speed = randomRange(150, 350);
 
         state.world.entities.push({
             id: `debris_md_${Math.random()}`,
             type: 'particle',
             isDebris: true,
             position: { ...pos },
-            radius: randomRange(6, 12),
+            radius: randomRange(8, 15), // Bigger shards
             color: Math.random() > 0.5 ? c1 : c2,
             velocity: { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed },
-            lifeTime: randomRange(0.4, 0.8),
+            lifeTime: randomRange(0.5, 0.9),
             gravity: true,
-            drag: 0.92,
-            angularVelocity: randomRange(-12, 12),
+            drag: 0.90,
+            angularVelocity: randomRange(-15, 15),
             shape: 'triangle',
             rotation: randomRange(0, Math.PI * 2),
             scaleDecay: true
         });
     }
 
-    // --- Small Chips (dots) - only if budget allows ---
-    if (lod < 2 && budgetRatio > 0.5) {
-        const smallChipCount = lod === 1 ? 2 : Math.floor(4 * budgetRatio);
+    // --- Small Chips (dots) - sparky look ---
+    if (lod < 2 && budgetRatio > 0.4) {
+        const smallChipCount = lod === 1 ? 4 : Math.floor(8 * budgetRatio);
         for (let i = 0; i < smallChipCount; i++) {
             const angle = randomRange(0, Math.PI * 2);
-            const speed = randomRange(80, 200);
+            const speed = randomRange(100, 300);
 
             state.world.entities.push({
                 id: `debris_sm_${Math.random()}`,
                 type: 'particle',
                 isDebris: true,
                 position: { ...pos },
-                radius: randomRange(2, 5),
+                radius: randomRange(3, 6),
                 color: c2,
                 velocity: { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed },
-                lifeTime: randomRange(0.3, 0.5),
+                lifeTime: randomRange(0.4, 0.7),
                 gravity: true,
-                drag: 0.88,
+                drag: 0.85,
+                isSpark: true,
                 shape: 'circle',
                 scaleDecay: true
             });
