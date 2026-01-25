@@ -88,7 +88,7 @@ export const updateGenericEntities = (
     dt: number,
     entitiesToRemove: Set<string>
 ): boolean => {
-    if (entity.type === 'particle' || entity.type === 'shockwave' || entity.type === 'floating_text' || entity.type === 'lightning' || entity.type === 'shockwave_ring') {
+    if (entity.type === 'particle' || entity.type === 'shockwave' || entity.type === 'floating_text' || entity.type === 'lightning' || entity.type === 'shockwave_ring' || entity.type === 'wall') {
         if (entity.type === 'particle') {
             if (entity.drag) entity.velocity = mult(entity.velocity || { x: 0, y: 0 }, entity.drag);
             if (entity.gravity) entity.velocity!.y += GRAVITY * 0.8 * dt;

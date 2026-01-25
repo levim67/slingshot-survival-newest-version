@@ -49,15 +49,17 @@ export interface BallDefinition {
 
 export type BossState =
   | 'SPAWNING' | 'IDLE_VULNERABLE' | 'ALIGNING' | 'DASHING' | 'STUNNED' | 'SHOOTING' | 'SCATTER' | 'LIGHTNING_STORM' | 'FIRE_NOVA'
-  | 'WORM_CHASE' | 'WORM_SPLIT';
+  | 'WORM_CHASE' | 'WORM_SPLIT'
+  | 'PRE_FIGHT' | 'CLOSING_WALLS' | 'ARC_BARRAGE' | 'SPIRAL_LANCES' | 'BEAM_CHARGE' | 'BEAM_FIRE' | 'MINE_FIELD' | 'MISSILE_STORM' | 'DYING' | 'SHATTER';
 
-export type BossType = 'CUBE_OVERLORD' | 'WORM_DEVOURER';
+export type BossType = 'CUBE_OVERLORD' | 'WORM_DEVOURER' | 'TRIANGLE_ARCHITECT';
 
 export interface Entity {
   id: string;
   type: 'player' | 'ball' | 'missile' | 'fireball' | 'acid_spit' | 'friendly_missile' | 'friendly_fireball' | 'bomb' | 'particle' | 'shockwave' | 'floating_text' | 'wall' | 'boss' | 'lightning' | 'super_missile' | 'mini_super_missile' | 'shockwave_ring';
   position: Vector2;
   radius: number;
+  width?: number;
   height?: number;
   color: string;
   velocity?: Vector2;

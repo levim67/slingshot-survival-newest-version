@@ -13,14 +13,15 @@ import { GRAVITY, LAVA_LEVEL, CONST_DECAY_RATE, BOSS_SPAWN_INTERVAL } from '../u
 
 // Systems
 import { updateAutoBounce, updateCombo, updatePassiveAbilities, updateHUD } from './systems/AbilitySystem';
-import { updateCubeBossAI, updateWormAI, handleWormSegmentDeath } from './systems/BossSystem';
+import { updateCubeBossAI, updateWormAI, handleWormSegmentDeath, updateTriangleBossAI } from './systems/BossSystem';
 import {
     handlePlatformCollisions,
     handleBossCollision,
     handleBallCollision,
     handleBlackHoleEffect,
     updateEnemyBehaviors,
-    destroyBall
+    destroyBall,
+    handleWallCollision
 } from './systems/CollisionSystem';
 import { updateFriendlyProjectiles, updateEnemyProjectiles, updateBomb } from './systems/ProjectileSystem';
 import { updateGenericEntities, updateLavaParticles, explodeBomb } from './systems/EntitySystem';
@@ -28,7 +29,7 @@ import { spawnDirectionalBurst } from './systems/VFXSystem';
 
 // Spawners
 import { initializeWorld, updateWorldGeneration, createLavaParticle, spawnChunkEntities } from './spawners/EntitySpawner';
-import { spawnCubeBoss, spawnWormBoss, killBoss } from './spawners/BossSpawner';
+import { spawnCubeBoss, spawnWormBoss, spawnTriangleBoss, killBoss } from './spawners/BossSpawner';
 import { spawnFloatingText, addShake, findBestTarget, findBombTarget } from './spawners/EffectSpawner';
 
 // Re-export for external consumers
@@ -56,9 +57,10 @@ export const updateGame = (state: GameState, dt: number, upgrades: Upgrades, cal
 
     // --- BOSS SPAWN ---
     if (!state.boss.active && state.time.aliveDuration >= state.boss.nextSpawnTime) {
-        const isWorm = state.boss.cycleCount % 2 === 1;
-        if (isWorm) spawnWormBoss(state);
-        else spawnCubeBoss(state);
+        const cycle = state.boss.cycleCount % 3;
+        if (cycle === 0) spawnCubeBoss(state);
+        else if (cycle === 1) spawnWormBoss(state);
+        else spawnTriangleBoss(state);
         state.boss.active = true;
     }
 
@@ -182,7 +184,10 @@ const handleEntityUpdates = (state: GameState, dt: number, upgrades: Upgrades, c
         if (bossEntities[0].bossData?.type === 'WORM_DEVOURER') {
             updateWormAI(state, bossEntities, dt);
         } else {
-            bossEntities.forEach(b => updateCubeBossAI(state, b, dt));
+            bossEntities.forEach(b => {
+                if (b.bossData?.type === 'TRIANGLE_ARCHITECT') updateTriangleBossAI(state, b, dt);
+                else updateCubeBossAI(state, b, dt);
+            });
         }
     }
 
@@ -210,6 +215,9 @@ const handleEntityUpdates = (state: GameState, dt: number, upgrades: Upgrades, c
 
         // Ball collision with player
         handleBallCollision(state, entity, isImmune, entitiesToRemove, upgrades);
+
+        // Wall Collision
+        if (entity.type === 'wall') handleWallCollision(state, entity, isImmune);
     }
 
     state.world.entities = state.world.entities.filter(e => !entitiesToRemove.has(e.id));

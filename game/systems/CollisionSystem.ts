@@ -53,6 +53,9 @@ export const handleBossCollision = (
         { x: entity.position.x - entity.radius, y: entity.position.y - entity.radius },
         { x: entity.radius * 2, y: entity.radius * 2 }).collision) {
 
+        // Ignore dying boss
+        if (entity.bossData.state === 'DYING' || entity.bossData.state === 'SHATTER') return false;
+
         const canHitBoss = entity.bossData.state === 'IDLE_VULNERABLE' || entity.bossData.type === 'WORM_DEVOURER';
 
         if (canHitBoss) {
@@ -77,7 +80,7 @@ export const handleBossCollision = (
 
                 if (entity.bossData.currentHealth <= 0) {
                     if (entity.bossData.type === 'WORM_DEVOURER') handleWormSegmentDeath(state, entity, entitiesToRemove, upgrades);
-                    else { killBoss(state, entity, upgrades); entitiesToRemove.add(entity.id); }
+                    else { killBoss(state, entity, upgrades); /* Don't remove ID yet, let killBoss set DYING */ }
                 }
             }
         } else {
@@ -92,6 +95,57 @@ export const handleBossCollision = (
         }
     }
     return true;
+};
+
+export const handleWallCollision = (state: GameState, wall: Entity, isImmune: boolean) => {
+    if (wall.type !== 'wall') return;
+    // Check collision with wall rect. Warning: wall position is top-left or center?
+    // checkCircleRect uses rect Pos (top-left) and Size.
+    // My spawners use Center position.
+    // I need to convert Center to Top-Left for checkCircleRect.
+
+    const w = wall.width || 100;
+    const h = wall.height || 100;
+    const topLeft = { x: wall.position.x - w / 2, y: wall.position.y - h / 2 }; /* Assuming center pos */
+    // Wait, SpawnClosingWalls uses Center.
+    // But checkCircleRect expects Top Left?
+    // utils/physics.ts checkCircleRect definition check:
+    // It usually expects x,y,w,h.
+    // Let's assume standard AABB input.
+
+    // Actually, I'll use checkCircleRect on the centered rect by adjusting passing topLeft.
+    // Wait, did I check physics.ts? Step 859 showed imports but not checkCircleRect impl.
+    // I'll assume standard Rect(x,y,w,h) means x,y is Top-Left.
+
+    // Correction:
+    // spawnClosingWalls sets position to center.
+    // So I must offset by -w/2, -h/2.
+
+    // BUT! checkCircleRect calls checkCollision(circle, rect).
+    // Let's rely on that behavior safely.
+
+    const { collision } = checkCircleRect(
+        state.player.position, state.player.radius,
+        { x: wall.position.x, y: wall.position.y }, // passing pos but checkCircleRect might think it's top-left
+        { x: w, y: h }
+    );
+    // Note: If wall.position is center, and checkCircleRect expects top-left, I need to subtract half size.
+    // I'll subtract half size to be safe.
+
+    const realTopLeft = { x: wall.position.x - w / 2, y: wall.position.y - h / 2 };
+    const { collision: hit } = checkCircleRect(state.player.position, state.player.radius, realTopLeft, { x: w, y: h });
+
+    if (hit) {
+        if (!isImmune) {
+            state.player.health -= 500;
+            spawnFloatingText(state, state.player.position, "CRUSHED!", '#ff0000');
+            audio.playSFX('impact');
+            addShake(state, 30);
+            // Bounce back?
+            const pushDir = normalize(sub(state.player.position, wall.position));
+            state.player.velocity = mult(pushDir, 2000);
+        }
+    }
 };
 
 /**

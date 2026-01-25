@@ -66,9 +66,53 @@ export const spawnWormBoss = (state: GameState) => {
 };
 
 /**
- * Handles boss death and rewards
+ * Spawns the Triangle Architect boss
+ */
+export const spawnTriangleBoss = (state: GameState) => {
+    const maxHp = 80000;
+    state.boss.maxHealth = maxHp;
+    const spawnY = state.player.position.y - 600;
+    spawnFloatingText(state, { x: state.player.position.x, y: spawnY + 200 }, "WARNING: ARCHITECT DETECTED", '#06b6d4');
+    audio.playSFX('charge');
+    audio.playSFX('boss_roar');
+    state.world.entities.push({
+        id: `boss_triangle_${Math.random()}`, type: 'boss',
+        position: { x: state.player.position.x, y: spawnY },
+        radius: 70, width: 140, height: 140, // Triangle approximation
+        color: '#06b6d4', velocity: { x: 0, y: 0 },
+        shape: 'triangle',
+        bossData: {
+            type: 'TRIANGLE_ARCHITECT', maxHealth: maxHp, currentHealth: maxHp,
+            state: 'PRE_FIGHT', stateTimer: 3.0, attackCounter: 0, subStage: 0, invincibilityTimer: 0
+        }
+    });
+};
+
+/**
+ * Handles boss death and rewards (Starts Dying Sequence or Finalizes it)
  */
 export const killBoss = (state: GameState, bossEntity: Entity | null, upgrades: Upgrades) => {
+    // If not bossEntity (e.g. quick win cheat?), just win.
+    if (!bossEntity) {
+        state.boss.active = false;
+        state.boss.nextSpawnTime = state.time.aliveDuration + BOSS_SPAWN_INTERVAL;
+        state.boss.cycleCount++;
+        spawnFloatingText(state, state.player.position, "VICTORY", '#ffd700');
+        return;
+    }
+
+    // Trigger Dying Sequence if not already dying
+    if (bossEntity.bossData && bossEntity.bossData.state !== 'DYING') {
+        bossEntity.bossData.state = 'DYING';
+        bossEntity.bossData.stateTimer = 4.0; // 4 seconds drama
+        bossEntity.velocity = { x: 0, y: 0 };
+        spawnFloatingText(state, bossEntity.position, "CRITICAL ERROR", '#ff0000');
+        audio.playSFX('break', 0.5);
+        // Visuals handled in AI
+        return;
+    }
+
+    // Final Cleanup (Called after DYING state finishes)
     state.boss.active = false;
     state.boss.nextSpawnTime = state.time.aliveDuration + BOSS_SPAWN_INTERVAL;
     state.boss.cycleCount++;
@@ -76,10 +120,9 @@ export const killBoss = (state: GameState, bossEntity: Entity | null, upgrades: 
     state.score += 50000;
     state.player.health = upgrades.maxHealth;
 
-    if (bossEntity) {
-        spawnExplosion(state, bossEntity.position, '#ffffff', '#ffd700', { x: 0, y: 0 });
-        spawnFloatingText(state, bossEntity.position, "BOSS DEFEATED", '#ffd700');
-    } else {
-        spawnFloatingText(state, state.player.position, "VICTORY", '#ffd700');
-    }
+    // Clear Boss Walls/Minions
+    state.world.entities = state.world.entities.filter(e => e.type !== 'wall' && e.type !== 'missile' && e.type !== 'fireball');
+
+    spawnExplosion(state, bossEntity.position, '#ffffff', '#ffd700', { x: 0, y: 0 });
+    spawnFloatingText(state, bossEntity.position, "BOSS DEFEATED", '#ffd700');
 };

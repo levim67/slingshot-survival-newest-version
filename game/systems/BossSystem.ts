@@ -123,6 +123,223 @@ export const updateCubeBossAI = (state: GameState, boss: Entity, dt: number) => 
 };
 
 /**
+ * Updates Triangle Architect AI
+ */
+export const updateTriangleBossAI = (state: GameState, boss: Entity, dt: number) => {
+    if (!boss.bossData) return;
+    const data = boss.bossData;
+    const toPlayer = sub(state.player.position, boss.position);
+    const distToPlayer = mag(toPlayer);
+
+    // Handle Cinematic Death
+    if (data.state === 'DYING') {
+        handleBossDeathSequence(state, boss, dt);
+        return;
+    }
+
+    data.stateTimer -= dt;
+    if (data.invincibilityTimer > 0) data.invincibilityTimer -= dt;
+
+    // Movement: Generally float near player but maintain distance
+    if (data.state === 'IDLE_VULNERABLE' || data.state === 'PRE_FIGHT') {
+        const pTarget = state.player.position;
+        const hoverY = pTarget.y - 450 + Math.sin(state.visuals.time * 2) * 50;
+        boss.position.x += (pTarget.x - boss.position.x) * 2 * dt;
+        boss.position.y += (hoverY - boss.position.y) * 2 * dt;
+        boss.rotation = (boss.rotation || 0) + 1 * dt;
+    }
+
+    switch (data.state) {
+        case 'PRE_FIGHT':
+            if (data.stateTimer <= 0) { data.state = 'CLOSING_WALLS'; data.stateTimer = 1.0; }
+            break;
+
+        case 'IDLE_VULNERABLE':
+            // Core exposed visual logic could go here (e.g. change color)
+            boss.color = '#22d3ee'; // Cyan glow
+            if (data.stateTimer <= 0) {
+                // Pick next attack
+                const r = Math.random();
+                if (r < 0.2) { data.state = 'CLOSING_WALLS'; data.stateTimer = 1.0; }
+                else if (r < 0.4) { data.state = 'ARC_BARRAGE'; data.stateTimer = 0.5; data.attackCounter = 0; }
+                else if (r < 0.6) { data.state = 'SPIRAL_LANCES'; data.stateTimer = 0.5; data.subStage = 20; }
+                else if (r < 0.8) { data.state = 'MINE_FIELD'; data.stateTimer = 0.5; }
+                else { data.state = 'MISSILE_STORM'; data.stateTimer = 0.5; data.subStage = 5; }
+
+                boss.color = '#06b6d4'; // Armored color
+                audio.playSFX('charge', 0.8);
+            }
+            break;
+
+        case 'CLOSING_WALLS':
+            // Telegraph Phase
+            boss.rotation = (boss.rotation || 0) + 10 * dt;
+            if (data.stateTimer > 0) {
+                // Warning lines could be spawned here once
+                if (data.stateTimer > 0.9) spawnFloatingText(state, state.player.position, "⚠️ WALLS DETECTED ⚠️", '#ff0000');
+            } else {
+                // EXECUTE
+                spawnClosingWalls(state, state.player.position);
+                audio.playSFX('super_launch');
+                data.state = 'IDLE_VULNERABLE'; // Vulnerable after big attack
+                data.stateTimer = 2.5;
+            }
+            break;
+
+        case 'ARC_BARRAGE':
+            boss.rotation = Math.atan2(toPlayer.y, toPlayer.x);
+            if (data.stateTimer <= 0) {
+                spawnDirectionalBurst(state, boss.position, normalize(toPlayer), 8, 800);
+                audio.playSFX('launch');
+                data.attackCounter++;
+                if (data.attackCounter > 2) {
+                    data.state = 'IDLE_VULNERABLE'; data.stateTimer = 2.0;
+                } else {
+                    data.stateTimer = 0.6; // Fire again
+                }
+            }
+            break;
+
+        case 'SPIRAL_LANCES':
+            boss.rotation = (boss.rotation || 0) + 5 * dt;
+            if (data.stateTimer <= 0 && data.subStage && data.subStage > 0) {
+                const angle = state.visuals.time * 3 + (data.subStage * 0.2);
+                const v = { x: Math.cos(angle) * 700, y: Math.sin(angle) * 700 };
+                state.world.entities.push({
+                    id: `lance_${Math.random()}`, type: 'missile',
+                    position: { ...boss.position }, velocity: v,
+                    radius: 12, color: '#fcd34d', lifeTime: 5.0, targetId: 'player'
+                });
+                if (data.subStage % 3 === 0) audio.playSFX('mini_launch', 0.5);
+                data.subStage--;
+                data.stateTimer = 0.15;
+            } else if (data.subStage === 0) {
+                data.state = 'IDLE_VULNERABLE'; data.stateTimer = 2.0;
+            }
+            break;
+
+        case 'MISSILE_STORM':
+            if (data.stateTimer <= 0 && data.subStage && data.subStage > 0) {
+                state.world.entities.push({
+                    id: `storm_${Math.random()}`, type: 'missile', targetId: 'player',
+                    position: add(boss.position, { x: randomRange(-100, 100), y: randomRange(-100, 100) }),
+                    velocity: { x: randomRange(-200, 200), y: -600 },
+                    radius: 15, color: '#ef4444', lifeTime: 8.0
+                });
+                audio.playSFX('launch', 0.8);
+                data.subStage--;
+                data.stateTimer = 0.3;
+            } else if (data.subStage === 0) {
+                data.state = 'IDLE_VULNERABLE'; data.stateTimer = 3.0; // Long vulnerable
+            }
+            break;
+
+        case 'MINE_FIELD':
+            if (data.stateTimer <= 0) {
+                for (let i = 0; i < 5; i++) {
+                    state.world.entities.push({
+                        id: `mine_${Math.random()}`, type: 'bomb',
+                        position: add(state.player.position, { x: randomRange(-600, 600), y: randomRange(-400, 400) }),
+                        velocity: { x: 0, y: 0 },
+                        radius: 20, color: '#f97316', lifeTime: 3.0,
+                        ballDef: BALL_DEFINITIONS['red_common'] // Dummy def
+                    });
+                }
+                audio.playSFX('bomb_throw');
+                data.state = 'IDLE_VULNERABLE'; data.stateTimer = 2.0;
+            }
+            break;
+    }
+};
+
+/**
+ * Handles cinematic death: Shake, Exploions, Slow Mo
+ */
+const handleBossDeathSequence = (state: GameState, boss: Entity, dt: number) => {
+    if (!boss.bossData) return;
+
+    // Slow Mo
+    state.time.scale = 0.15; // Super slow
+    addShake(state, 5); // Constant rumble
+
+    boss.bossData.stateTimer -= dt; // In slow mo, this counts down slowly? 
+    // Wait, dt is real time or game time? updateGame passes `dt` (real) but AI usually uses `dt`.
+    // We want 3 seconds REAL time.
+    // If we use dt here, and dt is NOT scaled by time scale (it usually isn't in updateGame before applying scale), then it's real time.
+    // updateGame: `const gameDt = dt * state.time.scale`.
+    // We receive `dt` here?
+    // updateTriangleAI is called with `dt`. 
+    // Wait, Engine.ts calls `updateCubeBossAI(state, b, dt)`. `dt` comes from `requestAnimationFrame` delta.
+    // So `dt` is REAL time. Perfect.
+
+    // Rotate/Shake boss
+    boss.rotation = (boss.rotation || 0) + 20 * dt;
+    boss.position = add(boss.position, { x: randomRange(-5, 5), y: randomRange(-5, 5) });
+
+    // Random explosions
+    if (Math.random() < 0.2) {
+        spawnExplosion(state, add(boss.position, { x: randomRange(-50, 50), y: randomRange(-50, 50) }), '#ffffff', '#ffd700', { x: 0, y: 0 });
+        audio.playSFX('break');
+    }
+
+    if (boss.bossData.stateTimer <= 0) {
+        // FINISH HIM
+        boss.bossData.state = 'SHATTER'; // Just to break loop
+        killBoss(state, boss, { maxHealth: 100 } as Upgrades); // Upgrades arg is dummy, handled in killBoss
+    }
+};
+
+const spawnClosingWalls = (state: GameState, center: Vector2) => {
+    const gapIndex = Math.floor(Math.random() * 4); // 0=Top, 1=Right, 2=Bottom, 3=Left
+    const dist = 1200;
+    const speed = 600;
+    const thickness = 100;
+    const length = 2000;
+
+    // 0: Top Wall (moves Down)
+    if (gapIndex !== 0) {
+        state.world.entities.push({
+            id: `wall_top_${Math.random()}`, type: 'wall',
+            position: { x: center.x, y: center.y - dist },
+            velocity: { x: 0, y: speed },
+            width: length, height: thickness, radius: thickness / 2,
+            color: '#ef4444', lifeTime: 5.0
+        });
+    }
+    // 1: Right Wall (moves Left)
+    if (gapIndex !== 1) {
+        state.world.entities.push({
+            id: `wall_right_${Math.random()}`, type: 'wall',
+            position: { x: center.x + dist, y: center.y },
+            velocity: { x: -speed, y: 0 },
+            width: thickness, height: length, radius: thickness / 2,
+            color: '#ef4444', lifeTime: 5.0
+        });
+    }
+    // 2: Bottom Wall (moves Up)
+    if (gapIndex !== 2) {
+        state.world.entities.push({
+            id: `wall_bot_${Math.random()}`, type: 'wall',
+            position: { x: center.x, y: center.y + dist },
+            velocity: { x: 0, y: -speed },
+            width: length, height: thickness, radius: thickness / 2,
+            color: '#ef4444', lifeTime: 5.0
+        });
+    }
+    // 3: Left Wall (moves Right)
+    if (gapIndex !== 3) {
+        state.world.entities.push({
+            id: `wall_left_${Math.random()}`, type: 'wall',
+            position: { x: center.x - dist, y: center.y },
+            velocity: { x: speed, y: 0 },
+            width: thickness, height: length, radius: thickness / 2,
+            color: '#ef4444', lifeTime: 5.0
+        });
+    }
+    spawnFloatingText(state, center, "WALLS CLOSING!", '#ff0000');
+};
+
+/**
  * Updates Worm Devourer boss AI - head chasing and body following
  */
 export const updateWormAI = (state: GameState, segments: Entity[], dt: number) => {
