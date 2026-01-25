@@ -1,0 +1,5 @@
+{
+  "name": "Slingshot Survival newest version",
+  "description": "The floor is lava! Slingshot between safe islands to survive. Moving costs health, but landing on solid ground restores it instantly.",
+  "requestFramePermissions": []
+}
