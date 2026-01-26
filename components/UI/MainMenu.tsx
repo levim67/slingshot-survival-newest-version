@@ -133,7 +133,7 @@ const MainMenu: React.FC<MainMenuProps> = ({ onStart, onOpenShop, totalCoins, ca
                         </div>
 
                         <div className="mt-8 pt-8 border-t border-white/10 text-center">
-                            <p className="text-xs text-white/30 uppercase tracking-widest">Build v0.4.2 (Beta)</p>
+                            <p className="text-xs text-white/30 uppercase tracking-widest">Build v0.4.3 (Camera Fix)</p>
                         </div>
                     </div>
                 </div>

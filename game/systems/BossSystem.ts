@@ -276,10 +276,15 @@ const handleBossDeathSequence = (state: GameState, boss: Entity, dt: number) => 
     boss.rotation = (boss.rotation || 0) + 20 * dt;
     boss.position = add(boss.position, { x: randomRange(-5, 5), y: randomRange(-5, 5) });
 
-    // Random explosions
-    if (Math.random() < 0.2) {
+    // Random explosions - frequent and chaotic
+    if (Math.random() < 0.6) {
         spawnExplosion(state, add(boss.position, { x: randomRange(-50, 50), y: randomRange(-50, 50) }), '#ffffff', '#ffd700', { x: 0, y: 0 });
-        audio.playSFX('break');
+        if (Math.random() < 0.5) audio.playSFX('break');
+
+        // Spawn debris chunks
+        if (Math.random() < 0.4) {
+            spawnDirectionalBurst(state, boss.position, { x: randomRange(-1, 1), y: randomRange(-1, 1) }, 4, 300);
+        }
     }
 
     if (boss.bossData.stateTimer <= 0) {
