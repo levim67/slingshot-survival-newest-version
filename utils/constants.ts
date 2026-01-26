@@ -69,6 +69,7 @@ export const BALL_DEFINITIONS: Record<BallTypeId, BallDefinition> = {
     coreColor: '#22c55e', glowColor: '#4ade80', glowRadius: 60, spikeStyle: 'normal',
     points: 400, isHazard: true, lethalOnTouch: true,
     specialEffect: 'NONE',
+    imageSrc: 'https://raw.githubusercontent.com/levim67/slingshot-survival-assets/main/green%20spike.png',
     symbol: 'none'
   },
   'spike_super': {
@@ -77,6 +78,7 @@ export const BALL_DEFINITIONS: Record<BallTypeId, BallDefinition> = {
     coreColor: '#ef4444', glowColor: '#f87171', glowRadius: 75, spikeStyle: 'super',
     points: 1200, isHazard: true, lethalOnTouch: true,
     specialEffect: 'NONE',
+    imageSrc: 'https://raw.githubusercontent.com/levim67/slingshot-survival-assets/main/red%20spike.png',
     symbol: 'none'
   },
   'black_hole': {

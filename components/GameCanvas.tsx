@@ -5,17 +5,17 @@ import { mag, normalize, sub, mult } from '../utils/physics';
 import * as audio from '../utils/audio';
 import { updateGame, createLavaParticle, spawnDirectionalBurst, initializeWorld } from '../game/Engine';
 import { renderGame } from '../game/Renderer';
-import { BOSS_SPAWN_INTERVAL } from '../utils/constants';
+import { BOSS_SPAWN_INTERVAL, BALL_DEFINITIONS } from '../utils/constants';
 
 interface GameCanvasProps {
   status: GameStateStatus;
-  gameId: number; 
+  gameId: number;
   upgrades: Upgrades;
   autoBounceLevel: number;
   onGameOver: (score: number) => void;
   onUpdateStats: (health: number, score: number, distance: number, multiplier: number) => void;
   onUpdateHUD: (unlocked: boolean, cooldownRemaining: number, isActive: boolean, timeAlive: number, bossHealth: number, maxBossHealth: number) => void;
-  triggerAutoBounce: number; 
+  triggerAutoBounce: number;
   skin: string;
   baseZoom: number;
 }
@@ -23,8 +23,9 @@ interface GameCanvasProps {
 const GameCanvas: React.FC<GameCanvasProps> = ({ status, gameId, upgrades, autoBounceLevel, onGameOver, onUpdateStats, onUpdateHUD, triggerAutoBounce, baseZoom }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const noiseCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const lastTriggerRef = useRef<number>(0); 
-  
+  const imagesRef = useRef<Record<string, HTMLImageElement>>({});
+  const lastTriggerRef = useRef<number>(0);
+
   // Game State Root
   const gameState = useRef<GameState>({
     player: { position: { x: 0, y: 479 }, velocity: { x: 0, y: 0 }, radius: 20, health: 100, mass: 1.5, onGround: false, trail: [] },
@@ -42,15 +43,27 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ status, gameId, upgrades, autoB
 
   // Init Noise Pattern
   useEffect(() => {
-      if (!noiseCanvasRef.current) {
-          const nc = document.createElement('canvas'); nc.width = 256; nc.height = 256;
-          const ctx = nc.getContext('2d');
-          if (ctx) {
-              const idata = ctx.createImageData(256, 256); const buffer32 = new Uint32Array(idata.data.buffer);
-              for (let i = 0; i < buffer32.length; i++) { const v = Math.random() * 20; buffer32[i] = (255 << 24) | (v << 16) | (v << 8) | v; }
-              ctx.putImageData(idata, 0, 0); noiseCanvasRef.current = nc;
-          }
+    if (!noiseCanvasRef.current) {
+      const nc = document.createElement('canvas'); nc.width = 256; nc.height = 256;
+      const ctx = nc.getContext('2d');
+      if (ctx) {
+        const idata = ctx.createImageData(256, 256); const buffer32 = new Uint32Array(idata.data.buffer);
+        for (let i = 0; i < buffer32.length; i++) { const v = Math.random() * 20; buffer32[i] = (255 << 24) | (v << 16) | (v << 8) | v; }
+        ctx.putImageData(idata, 0, 0); noiseCanvasRef.current = nc;
       }
+    }
+  }, []);
+
+  // Preload Images
+  useEffect(() => {
+    Object.keys(BALL_DEFINITIONS).forEach(key => {
+      const def = BALL_DEFINITIONS[key as any];
+      if (def.imageSrc) {
+        const img = new Image();
+        img.src = def.imageSrc;
+        imagesRef.current[key] = img;
+      }
+    });
   }, []);
 
   // Resize
@@ -66,20 +79,20 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ status, gameId, upgrades, autoB
       const state = gameState.current;
       // Reset logic
       state.player = { position: { x: 0, y: 479 }, velocity: { x: 0, y: 0 }, radius: 20, health: upgrades.maxHealth, mass: 1.5, onGround: false, trail: [] };
-      state.score = 0; 
-      state.distanceRecord = 0; 
-      state.combo = { multiplier: 1, timer: 0 }; 
-      state.time.aliveDuration = 0; 
+      state.score = 0;
+      state.distanceRecord = 0;
+      state.combo = { multiplier: 1, timer: 0 };
+      state.time.aliveDuration = 0;
       state.boss = { nextSpawnTime: BOSS_SPAWN_INTERVAL, active: false, lastHealth: 0, maxHealth: 1, cycleCount: 0 };
-      state.camera.zoom = baseZoom; 
+      state.camera.zoom = baseZoom;
       state.camera.position = { x: 0, y: 400 };
       state.utility = { autoBounceState: 'OFF', activeTimer: 0, charge: 0, targetSearchTimer: 0, currentTargetId: null, missileTimer: 0, fireballTimer: 0, bombTimer: 0, lastHudUpdate: { unlocked: false, charge: -1, active: false, time: -1, bossHp: -1 } };
       lastTriggerRef.current = triggerAutoBounce;
-      
+
       // Full World Re-Init
       initializeWorld(state);
     }
-  }, [gameId, upgrades.maxHealth, baseZoom]); 
+  }, [gameId, upgrades.maxHealth, baseZoom]);
 
   // Main Loop
   useEffect(() => {
@@ -91,14 +104,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ status, gameId, upgrades, autoB
     const loop = (timestamp: number) => {
       // If paused, just render last frame but don't update
       if (status !== GameStateStatus.PLAYING) {
-          if (status === GameStateStatus.PAUSED || status === GameStateStatus.GAME_OVER) {
-             // Optional: Render one last frame or keep rendering loop for "frozen" effect
-             // We can allow rendering to continue to show particle decays/idle animations even if game is "over" visually, 
-             // but 'updateGame' shouldn't run.
-             if (status === GameStateStatus.PAUSED) renderGame(ctx, canvas, gameState.current, upgrades, baseZoom, noisePattern);
-          }
-          animationFrameId = requestAnimationFrame(loop);
-          return;
+        if (status === GameStateStatus.PAUSED || status === GameStateStatus.GAME_OVER) {
+          // Optional: Render one last frame or keep rendering loop for "frozen" effect
+          // We can allow rendering to continue to show particle decays/idle animations even if game is "over" visually, 
+          // but 'updateGame' shouldn't run.
+          if (status === GameStateStatus.PAUSED) renderGame(ctx, canvas, gameState.current, upgrades, baseZoom, noisePattern, imagesRef.current);
+        }
+        animationFrameId = requestAnimationFrame(loop);
+        return;
       }
 
       if (!noisePattern && noiseCanvasRef.current) noisePattern = ctx.createPattern(noiseCanvasRef.current, 'repeat');
@@ -110,20 +123,20 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ status, gameId, upgrades, autoB
 
       // Input Trigger for AutoBounce
       if (triggerAutoBounce > lastTriggerRef.current) {
-          lastTriggerRef.current = triggerAutoBounce;
-          if (state.utility.autoBounceState === 'OFF' && autoBounceLevel >= 1 && state.utility.charge >= 1.0) {
-              state.utility.autoBounceState = 'ACTIVE';
-              state.utility.activeTimer = 2.0 + (5.0 - 2.0) * ((autoBounceLevel - 1) / 8); 
-              state.input.isDragging = false; 
-              audio.playSFX('charge');
-          }
+        lastTriggerRef.current = triggerAutoBounce;
+        if (state.utility.autoBounceState === 'OFF' && autoBounceLevel >= 1 && state.utility.charge >= 1.0) {
+          state.utility.autoBounceState = 'ACTIVE';
+          state.utility.activeTimer = 2.0 + (5.0 - 2.0) * ((autoBounceLevel - 1) / 8);
+          state.input.isDragging = false;
+          audio.playSFX('charge');
+        }
       }
 
       // Logic Step
       updateGame(state, dt, upgrades, { onGameOver, onUpdateStats, onUpdateHUD });
 
       // Render Step
-      renderGame(ctx, canvas, state, upgrades, baseZoom, noisePattern);
+      renderGame(ctx, canvas, state, upgrades, baseZoom, noisePattern, imagesRef.current);
 
       animationFrameId = requestAnimationFrame(loop);
     };
@@ -131,46 +144,46 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ status, gameId, upgrades, autoB
 
     // Input Handling
     const handleDown = (x: number, y: number, id: number) => {
-        if (gameState.current.player.health <= 0 || gameState.current.utility.autoBounceState === 'ACTIVE' || status !== GameStateStatus.PLAYING) return;
-        gameState.current.input.isDragging = true;
-        gameState.current.input.pointerId = id;
-        gameState.current.input.startPos = { x, y };
-        gameState.current.input.currentPos = { x, y };
+      if (gameState.current.player.health <= 0 || gameState.current.utility.autoBounceState === 'ACTIVE' || status !== GameStateStatus.PLAYING) return;
+      gameState.current.input.isDragging = true;
+      gameState.current.input.pointerId = id;
+      gameState.current.input.startPos = { x, y };
+      gameState.current.input.currentPos = { x, y };
     };
     const handleMove = (x: number, y: number, id: number) => {
-        if (gameState.current.input.isDragging && gameState.current.input.pointerId === id) gameState.current.input.currentPos = { x, y };
+      if (gameState.current.input.isDragging && gameState.current.input.pointerId === id) gameState.current.input.currentPos = { x, y };
     };
     const handleUp = (id: number) => {
-        const input = gameState.current.input;
-        if (input.isDragging && input.pointerId === id) {
-            input.isDragging = false;
-            const dragVec = sub(input.startPos, input.currentPos);
-            const dragMag = Math.min(mag(dragVec), 300);
-            if (dragMag > 10) {
-                const dir = normalize(dragVec);
-                const force = dragMag * 5.0 * upgrades.speedMultiplier;
-                gameState.current.player.velocity = mult(dir, force);
-                gameState.current.player.health -= 6;
-                audio.playSFX('launch');
-                spawnDirectionalBurst(gameState.current, gameState.current.player.position, mult(dir, -1), Math.floor(dragMag/3), dragMag*2);
-            }
+      const input = gameState.current.input;
+      if (input.isDragging && input.pointerId === id) {
+        input.isDragging = false;
+        const dragVec = sub(input.startPos, input.currentPos);
+        const dragMag = Math.min(mag(dragVec), 300);
+        if (dragMag > 10) {
+          const dir = normalize(dragVec);
+          const force = dragMag * 5.0 * upgrades.speedMultiplier;
+          gameState.current.player.velocity = mult(dir, force);
+          gameState.current.player.health -= 6;
+          audio.playSFX('launch');
+          spawnDirectionalBurst(gameState.current, gameState.current.player.position, mult(dir, -1), Math.floor(dragMag / 3), dragMag * 2);
         }
+      }
     };
 
     const onMouseDown = (e: MouseEvent) => handleDown(e.clientX, e.clientY, 1);
     const onMouseMove = (e: MouseEvent) => handleMove(e.clientX, e.clientY, 1);
     const onMouseUp = (e: MouseEvent) => handleUp(1);
     const onTouchStart = (e: TouchEvent) => handleDown(e.changedTouches[0].clientX, e.changedTouches[0].clientY, e.changedTouches[0].identifier);
-    const onTouchMove = (e: TouchEvent) => { if(gameState.current.input.isDragging) e.preventDefault(); handleMove(e.changedTouches[0].clientX, e.changedTouches[0].clientY, e.changedTouches[0].identifier); };
-    const onTouchEnd = (e: TouchEvent) => { if(gameState.current.input.isDragging) e.preventDefault(); handleUp(e.changedTouches[0].identifier); };
+    const onTouchMove = (e: TouchEvent) => { if (gameState.current.input.isDragging) e.preventDefault(); handleMove(e.changedTouches[0].clientX, e.changedTouches[0].clientY, e.changedTouches[0].identifier); };
+    const onTouchEnd = (e: TouchEvent) => { if (gameState.current.input.isDragging) e.preventDefault(); handleUp(e.changedTouches[0].identifier); };
 
     canvas.addEventListener('mousedown', onMouseDown); window.addEventListener('mousemove', onMouseMove); window.addEventListener('mouseup', onMouseUp);
-    canvas.addEventListener('touchstart', onTouchStart, {passive:false}); window.addEventListener('touchmove', onTouchMove, {passive:false}); window.addEventListener('touchend', onTouchEnd, {passive:false});
+    canvas.addEventListener('touchstart', onTouchStart, { passive: false }); window.addEventListener('touchmove', onTouchMove, { passive: false }); window.addEventListener('touchend', onTouchEnd, { passive: false });
 
     return () => {
-        cancelAnimationFrame(animationFrameId);
-        canvas.removeEventListener('mousedown', onMouseDown); window.removeEventListener('mousemove', onMouseMove); window.removeEventListener('mouseup', onMouseUp);
-        canvas.removeEventListener('touchstart', onTouchStart); window.removeEventListener('touchmove', onTouchMove); window.removeEventListener('touchend', onTouchEnd);
+      cancelAnimationFrame(animationFrameId);
+      canvas.removeEventListener('mousedown', onMouseDown); window.removeEventListener('mousemove', onMouseMove); window.removeEventListener('mouseup', onMouseUp);
+      canvas.removeEventListener('touchstart', onTouchStart); window.removeEventListener('touchmove', onTouchMove); window.removeEventListener('touchend', onTouchEnd);
     };
   }, [status, upgrades, autoBounceLevel, onUpdateHUD, triggerAutoBounce, baseZoom, gameId]);
 

@@ -3,7 +3,7 @@ import { GameState, Entity, LavaParticle, Upgrades } from '../types';
 import { mag, normalize, add, mult, sub } from '../utils/physics';
 import { LAVA_LEVEL, BALL_DEFINITIONS, GRAVITY } from '../utils/constants';
 
-export const renderGame = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, state: GameState, upgrades: Upgrades, baseZoom: number, noisePattern: CanvasPattern | null) => {
+export const renderGame = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, state: GameState, upgrades: Upgrades, baseZoom: number, noisePattern: CanvasPattern | null, images: Record<string, HTMLImageElement>) => {
     const { width, height } = canvas;
 
     // --- CAMERA LERP ---
@@ -324,79 +324,108 @@ export const renderGame = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
                 ctx.shadowBlur = 0; ctx.rotate(state.visuals.time * 2); ctx.strokeStyle = '#a855f7'; ctx.lineWidth = 4; ctx.beginPath(); ctx.ellipse(0, 0, e.radius + 15, e.radius + 5, 0, 0, Math.PI * 2); ctx.stroke();
             } else {
                 // ===== SPIKES - REDESIGNED =====
+                // ===== SPIKES - REDESIGNED (IMAGE SUPPORT) =====
                 if (def.spikeStyle && def.spikeStyle !== 'none') {
-                    const isSuper = def.spikeStyle === 'super';
-                    const spikeCount = isSuper ? 16 : 8;
-                    const rotSpeed = isSuper ? 3 : 1.5;
-                    const pulse = 1 + Math.sin(state.visuals.time * 8) * 0.05;
+                    const img = (images && def.id && images[def.id]) ? images[def.id] : null;
 
-                    ctx.save();
-                    ctx.rotate(state.visuals.time * rotSpeed);
-                    ctx.scale(pulse, pulse);
-
-                    // Outer dangerous glow
-                    ctx.shadowColor = isSuper ? '#ff2222' : '#22ff22';
-                    ctx.shadowBlur = 12;
-
-                    // OPTIMIZATION: Create gradient ONCE per ball
-                    const spikeLength = isSuper ? e.radius * 1.6 : e.radius * 1.4;
-                    const grad = ctx.createLinearGradient(e.radius * 0.5, 0, spikeLength, 0);
-                    if (isSuper) {
-                        grad.addColorStop(0, '#8b0000');
-                        grad.addColorStop(0.6, '#ff4444');
-                        grad.addColorStop(1, '#ffffff');
-                        ctx.strokeStyle = '#440000';
-                    } else {
-                        grad.addColorStop(0, '#006400');
-                        grad.addColorStop(0.6, '#44ff44');
-                        grad.addColorStop(1, '#ffffff');
-                        ctx.strokeStyle = '#003300';
-                    }
-                    ctx.fillStyle = grad;
-                    ctx.lineWidth = 1.5;
-
-                    const baseWidth = isSuper ? 0.15 : 0.2;
-
-                    // Draw all spikes
-                    for (let i = 0; i < spikeCount; i++) {
+                    if (img && img.complete) {
+                        // --- IMAGE RENDERING ---
                         ctx.save();
-                        ctx.rotate((Math.PI * 2 * i) / spikeCount);
 
-                        // Spike body (sharp triangle)
+                        // "Cool floaty effect" - Slow rotation independent of physics
+                        const rotSpeed = def.spikeStyle === 'super' ? 0.8 : 0.4;
+                        ctx.rotate(state.visuals.time * rotSpeed);
+
+                        // Gentle Pulse
+                        const pulse = 1 + Math.sin(state.visuals.time * 3) * 0.05;
+                        ctx.scale(pulse, pulse);
+
+                        // Glow
+                        ctx.shadowColor = def.glowColor;
+                        ctx.shadowBlur = def.glowRadius || 20;
+
+                        // Draw Image centered
+                        // Adjust size multiplier to fit hitbox (radius) visually
+                        const size = e.radius * 2.6;
+                        ctx.drawImage(img, -size / 2, -size / 2, size, size);
+
+                        ctx.restore();
+
+                    } else {
+                        // --- FALLBACK PROCEDURAL RENDERING ---
+                        const isSuper = def.spikeStyle === 'super';
+                        const spikeCount = isSuper ? 16 : 8;
+                        const rotSpeed = isSuper ? 3 : 1.5;
+                        const pulse = 1 + Math.sin(state.visuals.time * 8) * 0.05;
+
+                        ctx.save();
+                        ctx.rotate(state.visuals.time * rotSpeed);
+                        ctx.scale(pulse, pulse);
+
+                        // Outer dangerous glow
+                        ctx.shadowColor = isSuper ? '#ff2222' : '#22ff22';
+                        ctx.shadowBlur = 12;
+
+                        // OPTIMIZATION: Create gradient ONCE per ball
+                        const spikeLength = isSuper ? e.radius * 1.6 : e.radius * 1.4;
+                        const grad = ctx.createLinearGradient(e.radius * 0.5, 0, spikeLength, 0);
+                        if (isSuper) {
+                            grad.addColorStop(0, '#8b0000');
+                            grad.addColorStop(0.6, '#ff4444');
+                            grad.addColorStop(1, '#ffffff');
+                            ctx.strokeStyle = '#440000';
+                        } else {
+                            grad.addColorStop(0, '#006400');
+                            grad.addColorStop(0.6, '#44ff44');
+                            grad.addColorStop(1, '#ffffff');
+                            ctx.strokeStyle = '#003300';
+                        }
+                        ctx.fillStyle = grad;
+                        ctx.lineWidth = 1.5;
+
+                        const baseWidth = isSuper ? 0.15 : 0.2;
+
+                        // Draw all spikes
+                        for (let i = 0; i < spikeCount; i++) {
+                            ctx.save();
+                            ctx.rotate((Math.PI * 2 * i) / spikeCount);
+
+                            // Spike body (sharp triangle)
+                            ctx.beginPath();
+                            ctx.moveTo(spikeLength, 0); // Tip
+                            ctx.lineTo(e.radius * 0.5, Math.tan(baseWidth) * e.radius * 0.5);
+                            ctx.lineTo(e.radius * 0.5, -Math.tan(baseWidth) * e.radius * 0.5);
+                            ctx.closePath();
+
+                            ctx.fill();
+                            ctx.stroke();
+
+                            ctx.restore();
+                        }
+
+                        ctx.shadowBlur = 0;
+
+                        // Core body (behind spikes but on top layer)
+                        ctx.fillStyle = def.coreColor;
                         ctx.beginPath();
-                        ctx.moveTo(spikeLength, 0); // Tip
-                        ctx.lineTo(e.radius * 0.5, Math.tan(baseWidth) * e.radius * 0.5);
-                        ctx.lineTo(e.radius * 0.5, -Math.tan(baseWidth) * e.radius * 0.5);
-                        ctx.closePath();
-
+                        ctx.arc(0, 0, e.radius * 0.6, 0, Math.PI * 2);
                         ctx.fill();
+
+                        // Inner highlight ring
+                        ctx.strokeStyle = isSuper ? '#ff8888' : '#88ff88';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.arc(0, 0, e.radius * 0.4, 0, Math.PI * 2);
                         ctx.stroke();
+
+                        // Center warning dot
+                        ctx.fillStyle = isSuper ? '#ff0000' : '#00ff00';
+                        ctx.beginPath();
+                        ctx.arc(0, 0, e.radius * 0.15, 0, Math.PI * 2);
+                        ctx.fill();
 
                         ctx.restore();
                     }
-
-                    ctx.shadowBlur = 0;
-
-                    // Core body (behind spikes but on top layer)
-                    ctx.fillStyle = def.coreColor;
-                    ctx.beginPath();
-                    ctx.arc(0, 0, e.radius * 0.6, 0, Math.PI * 2);
-                    ctx.fill();
-
-                    // Inner highlight ring
-                    ctx.strokeStyle = isSuper ? '#ff8888' : '#88ff88';
-                    ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    ctx.arc(0, 0, e.radius * 0.4, 0, Math.PI * 2);
-                    ctx.stroke();
-
-                    // Center warning dot
-                    ctx.fillStyle = isSuper ? '#ff0000' : '#00ff00';
-                    ctx.beginPath();
-                    ctx.arc(0, 0, e.radius * 0.15, 0, Math.PI * 2);
-                    ctx.fill();
-
-                    ctx.restore();
                 }
 
                 // MAIN BODY

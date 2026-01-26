@@ -45,6 +45,7 @@ export interface BallDefinition {
   juiceDelta?: number;
   fullJuiceRefill?: boolean;
   specialEffect?: 'NONE' | 'RANDOM_LAUNCH' | 'ARROW_LAUNCH' | 'DRAIN_DROP' | 'SPAWN_MISSILES' | 'BLACK_HOLE' | 'FIREBALL' | 'LIGHTNING';
+  imageSrc?: string;
 }
 
 export type BossState =
