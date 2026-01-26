@@ -597,13 +597,17 @@ export const renderGame = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
 const renderBoss = (ctx: CanvasRenderingContext2D, boss: Entity, time: number) => {
     ctx.save();
 
-    // Death VFX: Shake & Strobe
+    // Death VFX: Shake & Strobe & Shrink
     const isDying = boss.bossData?.state === 'DYING';
     if (isDying) {
         const shake = 15;
         ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
         if (Math.random() < 0.3) ctx.globalCompositeOperation = 'lighter'; // Flash
         ctx.globalAlpha = 0.8 + Math.sin(time * 50) * 0.2; // Flicker
+
+        // Shrink Effect
+        const lifeRatio = Math.max(0, (boss.bossData?.stateTimer || 0) / 4.0);
+        ctx.scale(lifeRatio, lifeRatio);
     }
 
     ctx.translate(boss.position.x, boss.position.y); ctx.rotate(boss.rotation || 0);

@@ -121,7 +121,7 @@ export const killBoss = (state: GameState, bossEntity: Entity | null, upgrades: 
     state.player.health = upgrades.maxHealth;
 
     // Clear Boss Walls/Minions
-    state.world.entities = state.world.entities.filter(e => e.type !== 'wall' && e.type !== 'missile' && e.type !== 'fireball');
+    state.world.entities = state.world.entities.filter(e => e.type !== 'wall' && e.type !== 'missile' && e.type !== 'fireball' && e.id !== bossEntity.id);
 
     spawnExplosion(state, bossEntity.position, '#ffffff', '#ffd700', { x: 0, y: 0 });
     spawnFloatingText(state, bossEntity.position, "BOSS DEFEATED", '#ffd700');

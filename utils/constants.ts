@@ -6,7 +6,7 @@ export const LAVA_LEVEL = 600;
 export const CHUNK_SIZE = 1200;
 export const GENERATION_BUFFER = 3000;
 export const CONST_DECAY_RATE = 2.0;
-export const BOSS_SPAWN_INTERVAL = 50; // Faster pacing
+export const BOSS_SPAWN_INTERVAL = 120; // 2 Minutes
 
 export const BALL_DEFINITIONS: Record<BallTypeId, BallDefinition> = {
   // A) SAFE TARGETS
