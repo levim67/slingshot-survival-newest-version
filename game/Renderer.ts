@@ -328,7 +328,8 @@ export const renderGame = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
                 if (def.spikeStyle && def.spikeStyle !== 'none') {
                     const img = (images && def.id && images[def.id]) ? images[def.id] : null;
 
-                    if (img && img.complete) {
+                    // Ensure image is loaded AND valid (width > 0)
+                    if (img && img.complete && img.naturalWidth > 0) {
                         // --- IMAGE RENDERING ---
                         ctx.save();
 

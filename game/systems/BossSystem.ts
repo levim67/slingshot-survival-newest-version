@@ -317,16 +317,28 @@ export const handleBossDeathSequence = (state: GameState, boss: Entity, dt: numb
                 state,
                 boss.position,
                 { x: Math.cos(angle), y: Math.sin(angle) },
-                20,
-                1000
+                25, // Increased speed
+                1200 // Increased distance
+            );
+        }
+
+        // MORE DEBRIS (Satisfying chunks)
+        for (let i = 0; i < 20; i++) {
+            spawnDirectionalBurst(
+                state,
+                boss.position,
+                { x: randomRange(-1, 1), y: randomRange(-1, 1) },
+                15,
+                800
             );
         }
 
         audio.playSFX('super_launch');
         audio.playSFX('break');
 
-        // Reset time scale back to normal IMMEDIATELY
-        state.time.scale = 1.0;
+        // Reset time scale back to normal IMMEDIATELY - REMOVED
+        // state.time.scale = 1.0; 
+        // We let Engine.ts lerp it back naturally for a smooth "slow-mo explosion" effect
 
         // Finalize boss death - Removes entity
         killBoss(state, boss, { maxHealth: 100 } as Upgrades);
@@ -431,7 +443,11 @@ export const updateWormAI = (state: GameState, segments: Entity[], dt: number) =
         if (Math.random() < 0.04) spawnAcidSpit(state, head.position, state.player.position);
     });
 
-    if (heads.some(h => h.bossData?.state === 'DYING')) return;
+    if (heads.some(h => h.bossData?.state === 'DYING')) {
+        // CRITICAL Fix: Freeze ALL segments to prevent "flying"
+        segments.forEach(s => s.velocity = { x: 0, y: 0 });
+        return;
+    }
 
     const bodies = segments.filter(e => e.bossData?.wormSegmentType !== 'HEAD');
     bodies.forEach(seg => {
