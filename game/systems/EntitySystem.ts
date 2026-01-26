@@ -108,7 +108,9 @@ export const updateGenericEntities = (
         if (entity.type === 'shockwave') entity.radius += 2500 * dt;
         if (entity.type === 'shockwave_ring') entity.radius += 1000 * dt;
 
+        // PHYSICS UPDATE
         if (entity.velocity) entity.position = add(entity.position, mult(entity.velocity, dt));
+
         entity.lifeTime = (entity.lifeTime || 1.0) - dt;
         if (entity.lifeTime <= 0 || (entity.type === 'particle' && entity.radius < 0.2)) {
             entitiesToRemove.add(entity.id);

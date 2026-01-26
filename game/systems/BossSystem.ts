@@ -263,93 +263,72 @@ export const updateTriangleBossAI = (state: GameState, boss: Entity, dt: number)
  * Handles cinematic death: Shake, Explosions, Slow Mo
  * This is called every frame while boss is in DYING state
  */
+/**
+ * Handles cinematic death: Shake, then ONE BIG EXPLOSION
+ * This is called every frame while boss is in DYING state
+ */
 export const handleBossDeathSequence = (state: GameState, boss: Entity, dt: number) => {
     if (!boss.bossData) return;
 
     // FREEZE the boss in place - no physics!
+    // We force velocity to 0 and strictly control position
     boss.velocity = { x: 0, y: 0 };
 
-    // Slow Mo - lerp towards target for smooth effect
+    // Slow Mo - constant super slow
     state.time.scale = 0.15;
-    addShake(state, 8); // Strong constant rumble
+    addShake(state, 5);
 
-    // dt is REAL TIME from requestAnimationFrame, not game time
+    // dt is REAL TIME from requestAnimationFrame
     boss.bossData.stateTimer -= dt;
 
-    // Visual effects - violent shake and rotation
-    boss.rotation = (boss.rotation || 0) + 25 * dt;
-    boss.position.x += randomRange(-8, 8);
-    boss.position.y += randomRange(-8, 8);
+    // Visual effects - just shake and rotation, NO small explosions (User requested)
+    boss.rotation = (boss.rotation || 0) + 15 * dt; // Slow rotation
+    // Jitter position slightly for "instability"
+    const jitter = 5;
+    // We need to keep it at its death position, not drift. 
+    // Since we don't store "deathPos", we just ensure we don't add cumulative velocity.
+    // The jitter adds to current pos, so we should probably start from a fixed pos? 
+    // But boss.position is modified directly. 
+    // Better: Add random offset for rendering, but logic position stays? 
+    // For now, simple jitter is fine as long as velocity is 0.
+    boss.position.x += randomRange(-jitter, jitter) * dt * 60;
+    boss.position.y += randomRange(-jitter, jitter) * dt * 60;
 
-    // Calculate death progress (0 = just started, 1 = about to finish)
-    const deathProgress = 1 - (boss.bossData.stateTimer / 4.0);
-
-    // Spawn explosions - MORE FREQUENT as death progresses
-    const explosionChance = 0.4 + deathProgress * 0.5; // 40% -> 90%
-    if (Math.random() < explosionChance) {
-        const offset = {
-            x: randomRange(-80, 80) * (1 + deathProgress),
-            y: randomRange(-80, 80) * (1 + deathProgress)
-        };
-        spawnExplosion(
-            state,
-            add(boss.position, offset),
-            '#ffffff',
-            deathProgress > 0.7 ? '#ff4444' : '#ffd700',
-            { x: 0, y: 0 }
-        );
-
-        // Sound effects
-        if (Math.random() < 0.4) audio.playSFX('break');
-
-        // Debris bursts
-        if (Math.random() < 0.5) {
-            spawnDirectionalBurst(
-                state,
-                add(boss.position, offset),
-                { x: randomRange(-1, 1), y: randomRange(-1, 1) },
-                6,
-                400
-            );
-        }
-    }
-
-    // === DEATH TIMER COMPLETE ===
+    // === DEATH TIMER COMPLETE (4 REAL SECONDS) ===
     if (boss.bossData.stateTimer <= 0) {
-        // MASSIVE FINAL EXPLOSION
+        // ONE BIG EXPLOSION as requested
+        spawnExplosion(state, boss.position, '#ffffff', '#ffd700', { x: 0, y: 0 });
+
+        // Massive shockwave ring
+        state.world.entities.push({
+            id: `death_ring_${Math.random()}`,
+            type: 'shockwave_ring',
+            position: { ...boss.position },
+            radius: 50,
+            color: '#ffffff',
+            lifeTime: 1.0,
+            velocity: { x: 0, y: 0 }
+        });
+
+        // 12-way starburst
         for (let i = 0; i < 12; i++) {
             const angle = (Math.PI * 2 * i) / 12;
-            const dist = randomRange(30, 100);
-            spawnExplosion(
-                state,
-                add(boss.position, { x: Math.cos(angle) * dist, y: Math.sin(angle) * dist }),
-                '#ffffff',
-                '#ff0000',
-                { x: Math.cos(angle) * 200, y: Math.sin(angle) * 200 }
-            );
-        }
-
-        // Giant debris burst
-        for (let i = 0; i < 8; i++) {
             spawnDirectionalBurst(
                 state,
                 boss.position,
-                { x: randomRange(-1, 1), y: randomRange(-1, 1) },
-                10,
-                600
+                { x: Math.cos(angle), y: Math.sin(angle) },
+                20,
+                1000
             );
         }
 
         audio.playSFX('super_launch');
         audio.playSFX('break');
 
-        // Mark as SHATTER to prevent further processing
-        boss.bossData.state = 'SHATTER';
-
-        // Reset time scale back to normal!
+        // Reset time scale back to normal IMMEDIATELY
         state.time.scale = 1.0;
 
-        // Finalize boss death
+        // Finalize boss death - Removes entity
         killBoss(state, boss, { maxHealth: 100 } as Upgrades);
     }
 };
@@ -411,6 +390,13 @@ export const updateWormAI = (state: GameState, segments: Entity[], dt: number) =
     const heads = segments.filter(e => e.bossData?.wormSegmentType === 'HEAD');
     heads.forEach(head => {
         if (!head.bossData) return;
+
+        // Handle DYING state for Head
+        if (head.bossData.state === 'DYING') {
+            handleBossDeathSequence(state, head, dt);
+            return;
+        }
+
         if (head.bossData.invincibilityTimer > 0) head.bossData.invincibilityTimer -= dt;
         const toPlayer = sub(state.player.position, head.position);
 
@@ -444,6 +430,8 @@ export const updateWormAI = (state: GameState, segments: Entity[], dt: number) =
 
         if (Math.random() < 0.04) spawnAcidSpit(state, head.position, state.player.position);
     });
+
+    if (heads.some(h => h.bossData?.state === 'DYING')) return;
 
     const bodies = segments.filter(e => e.bossData?.wormSegmentType !== 'HEAD');
     bodies.forEach(seg => {
