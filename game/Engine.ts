@@ -157,7 +157,7 @@ export const updateGame = (state: GameState, dt: number, upgrades: Upgrades, cal
     handlePlatformCollisions(state, upgrades);
 
     // --- ENTITY UPDATES ---
-    handleEntityUpdates(state, gameDt, upgrades, callbacks);
+    handleEntityUpdates(state, dt, gameDt, upgrades, callbacks);
 
     // --- PLAYER STATUS ---
     if (state.player.position.y > LAVA_LEVEL - 10) {
@@ -181,46 +181,48 @@ export const updateGame = (state: GameState, dt: number, upgrades: Upgrades, cal
 
 /**
  * Handles all entity updates - boss AI, projectiles, collisions
+ * @param realDt - Actual time delta from requestAnimationFrame (for boss death timers)
+ * @param gameDt - Scaled time delta for gameplay physics
  */
-const handleEntityUpdates = (state: GameState, dt: number, upgrades: Upgrades, callbacks: GameCallbacks) => {
+const handleEntityUpdates = (state: GameState, realDt: number, gameDt: number, upgrades: Upgrades, callbacks: GameCallbacks) => {
     const entitiesToRemove = new Set<string>();
     const activeEntities = state.world.entities.filter(e => Math.abs(e.position.x - state.player.position.x) < 3000);
     const isImmune = state.utility.autoBounceState === 'ACTIVE';
 
-    // Boss AI
+    // Boss AI - uses realDt so death timers work correctly during slow-mo
     const bossEntities = activeEntities.filter(e => e.type === 'boss');
     if (bossEntities.length > 0) {
         if (bossEntities[0].bossData?.type === 'WORM_DEVOURER') {
-            updateWormAI(state, bossEntities, dt);
+            updateWormAI(state, bossEntities, realDt);
         } else {
             bossEntities.forEach(b => {
-                if (b.bossData?.type === 'TRIANGLE_ARCHITECT') updateTriangleBossAI(state, b, dt);
-                else updateCubeBossAI(state, b, dt);
+                if (b.bossData?.type === 'TRIANGLE_ARCHITECT') updateTriangleBossAI(state, b, realDt);
+                else updateCubeBossAI(state, b, realDt);
             });
         }
     }
 
     for (const entity of activeEntities) {
         // Super missiles and friendly projectiles
-        if (updateFriendlyProjectiles(state, entity, dt, activeEntities, entitiesToRemove, upgrades, destroyBall)) continue;
+        if (updateFriendlyProjectiles(state, entity, gameDt, activeEntities, entitiesToRemove, upgrades, destroyBall)) continue;
 
         // Bombs
-        if (updateBomb(state, entity, dt, activeEntities, entitiesToRemove, explodeBomb, upgrades)) continue;
+        if (updateBomb(state, entity, gameDt, activeEntities, entitiesToRemove, explodeBomb, upgrades)) continue;
 
         // Boss collision with player
-        handleBossCollision(state, entity, dt, isImmune, entitiesToRemove, upgrades);
+        handleBossCollision(state, entity, gameDt, isImmune, entitiesToRemove, upgrades);
 
         // Enemy projectiles
-        if (updateEnemyProjectiles(state, entity, dt, isImmune, entitiesToRemove)) continue;
+        if (updateEnemyProjectiles(state, entity, gameDt, isImmune, entitiesToRemove)) continue;
 
         // Enemy behaviors (missile battery, flame enemy, electric enemy)
-        updateEnemyBehaviors(state, entity, dt, isImmune);
+        updateEnemyBehaviors(state, entity, gameDt, isImmune);
 
         // Black hole effect
-        handleBlackHoleEffect(state, entity, dt);
+        handleBlackHoleEffect(state, entity, gameDt);
 
         // Generic entity physics and lifetime
-        if (updateGenericEntities(state, entity, dt, entitiesToRemove)) continue;
+        if (updateGenericEntities(state, entity, gameDt, entitiesToRemove)) continue;
 
         // Ball collision with player
         handleBallCollision(state, entity, isImmune, entitiesToRemove, upgrades);

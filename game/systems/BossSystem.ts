@@ -14,6 +14,13 @@ import { killBoss } from '../spawners/BossSpawner';
 export const updateCubeBossAI = (state: GameState, boss: Entity, dt: number) => {
     if (!boss.bossData) return;
     const data = boss.bossData;
+
+    // Handle Cinematic Death - CHECK THIS FIRST
+    if (data.state === 'DYING') {
+        handleBossDeathSequence(state, boss, dt);
+        return;
+    }
+
     const toPlayer = sub(state.player.position, boss.position);
     const distToPlayer = mag(toPlayer);
 
@@ -253,44 +260,97 @@ export const updateTriangleBossAI = (state: GameState, boss: Entity, dt: number)
 };
 
 /**
- * Handles cinematic death: Shake, Exploions, Slow Mo
+ * Handles cinematic death: Shake, Explosions, Slow Mo
+ * This is called every frame while boss is in DYING state
  */
-const handleBossDeathSequence = (state: GameState, boss: Entity, dt: number) => {
+export const handleBossDeathSequence = (state: GameState, boss: Entity, dt: number) => {
     if (!boss.bossData) return;
 
-    // Slow Mo
-    state.time.scale = 0.15; // Super slow
-    addShake(state, 5); // Constant rumble
+    // FREEZE the boss in place - no physics!
+    boss.velocity = { x: 0, y: 0 };
 
-    boss.bossData.stateTimer -= dt; // In slow mo, this counts down slowly? 
-    // Wait, dt is real time or game time? updateGame passes `dt` (real) but AI usually uses `dt`.
-    // We want 3 seconds REAL time.
-    // If we use dt here, and dt is NOT scaled by time scale (it usually isn't in updateGame before applying scale), then it's real time.
-    // updateGame: `const gameDt = dt * state.time.scale`.
-    // We receive `dt` here?
-    // updateTriangleAI is called with `dt`. 
-    // Wait, Engine.ts calls `updateCubeBossAI(state, b, dt)`. `dt` comes from `requestAnimationFrame` delta.
-    // So `dt` is REAL time. Perfect.
+    // Slow Mo - lerp towards target for smooth effect
+    state.time.scale = 0.15;
+    addShake(state, 8); // Strong constant rumble
 
-    // Rotate/Shake boss
-    boss.rotation = (boss.rotation || 0) + 20 * dt;
-    boss.position = add(boss.position, { x: randomRange(-5, 5), y: randomRange(-5, 5) });
+    // dt is REAL TIME from requestAnimationFrame, not game time
+    boss.bossData.stateTimer -= dt;
 
-    // Random explosions - frequent and chaotic
-    if (Math.random() < 0.6) {
-        spawnExplosion(state, add(boss.position, { x: randomRange(-50, 50), y: randomRange(-50, 50) }), '#ffffff', '#ffd700', { x: 0, y: 0 });
-        if (Math.random() < 0.5) audio.playSFX('break');
+    // Visual effects - violent shake and rotation
+    boss.rotation = (boss.rotation || 0) + 25 * dt;
+    boss.position.x += randomRange(-8, 8);
+    boss.position.y += randomRange(-8, 8);
 
-        // Spawn debris chunks
-        if (Math.random() < 0.4) {
-            spawnDirectionalBurst(state, boss.position, { x: randomRange(-1, 1), y: randomRange(-1, 1) }, 4, 300);
+    // Calculate death progress (0 = just started, 1 = about to finish)
+    const deathProgress = 1 - (boss.bossData.stateTimer / 4.0);
+
+    // Spawn explosions - MORE FREQUENT as death progresses
+    const explosionChance = 0.4 + deathProgress * 0.5; // 40% -> 90%
+    if (Math.random() < explosionChance) {
+        const offset = {
+            x: randomRange(-80, 80) * (1 + deathProgress),
+            y: randomRange(-80, 80) * (1 + deathProgress)
+        };
+        spawnExplosion(
+            state,
+            add(boss.position, offset),
+            '#ffffff',
+            deathProgress > 0.7 ? '#ff4444' : '#ffd700',
+            { x: 0, y: 0 }
+        );
+
+        // Sound effects
+        if (Math.random() < 0.4) audio.playSFX('break');
+
+        // Debris bursts
+        if (Math.random() < 0.5) {
+            spawnDirectionalBurst(
+                state,
+                add(boss.position, offset),
+                { x: randomRange(-1, 1), y: randomRange(-1, 1) },
+                6,
+                400
+            );
         }
     }
 
+    // === DEATH TIMER COMPLETE ===
     if (boss.bossData.stateTimer <= 0) {
-        // FINISH HIM
-        boss.bossData.state = 'SHATTER'; // Just to break loop
-        killBoss(state, boss, { maxHealth: 100 } as Upgrades); // Upgrades arg is dummy, handled in killBoss
+        // MASSIVE FINAL EXPLOSION
+        for (let i = 0; i < 12; i++) {
+            const angle = (Math.PI * 2 * i) / 12;
+            const dist = randomRange(30, 100);
+            spawnExplosion(
+                state,
+                add(boss.position, { x: Math.cos(angle) * dist, y: Math.sin(angle) * dist }),
+                '#ffffff',
+                '#ff0000',
+                { x: Math.cos(angle) * 200, y: Math.sin(angle) * 200 }
+            );
+        }
+
+        // Giant debris burst
+        for (let i = 0; i < 8; i++) {
+            spawnDirectionalBurst(
+                state,
+                boss.position,
+                { x: randomRange(-1, 1), y: randomRange(-1, 1) },
+                10,
+                600
+            );
+        }
+
+        audio.playSFX('super_launch');
+        audio.playSFX('break');
+
+        // Mark as SHATTER to prevent further processing
+        boss.bossData.state = 'SHATTER';
+
+        // Reset time scale back to normal!
+        state.time.scale = 1.0;
+
+        // Finalize boss death
+        killBoss(state, boss, { maxHealth: 100 } as Upgrades);
     }
 };
 
