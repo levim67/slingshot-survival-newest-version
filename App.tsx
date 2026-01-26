@@ -225,11 +225,35 @@ const App: React.FC = () => {
         />
       )}
 
-      {/* PAUSE OVERLAY */}
+      {/* PAUSE OVERLAY WITH SETTINGS */}
       {status === GameStateStatus.PAUSED && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="flex flex-col items-center gap-6">
+          <div className="flex flex-col items-center gap-6 bg-gray-900/80 p-8 rounded-2xl border border-white/20">
             <h2 className="text-4xl font-black text-white italic">PAUSED</h2>
+
+            {/* Settings Section */}
+            <div className="w-full border-t border-white/20 pt-4">
+              <h3 className="text-lg font-bold text-white/80 mb-3">⚙️ SETTINGS</h3>
+
+              {/* Camera Zoom Slider */}
+              <div className="flex flex-col gap-2">
+                <label className="text-sm text-white/60">Camera Zoom: {(cameraZoom * 100).toFixed(0)}%</label>
+                <input
+                  type="range"
+                  min="0.4"
+                  max="1.0"
+                  step="0.05"
+                  value={cameraZoom}
+                  onChange={(e) => setCameraZoom(parseFloat(e.target.value))}
+                  className="w-48 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-orange-500"
+                />
+                <div className="flex justify-between text-xs text-white/40">
+                  <span>Far</span>
+                  <span>Close</span>
+                </div>
+              </div>
+            </div>
+
             <button onClick={togglePause} className="bg-white text-black px-8 py-3 rounded-full font-bold text-xl hover:scale-105 transition-transform">RESUME</button>
             <button onClick={() => setStatus(GameStateStatus.MENU)} className="text-white/70 hover:text-white font-bold">EXIT TO MENU</button>
           </div>
