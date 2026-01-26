@@ -1,19 +1,19 @@
 
 import { BallTypeId, BallDefinition } from '../types';
 
-export const GRAVITY = 900; 
-export const LAVA_LEVEL = 600; 
+export const GRAVITY = 900;
+export const LAVA_LEVEL = 600;
 export const CHUNK_SIZE = 1200;
-export const GENERATION_BUFFER = 3000; 
+export const GENERATION_BUFFER = 3000;
 export const CONST_DECAY_RATE = 2.0;
-export const BOSS_SPAWN_INTERVAL = 120; // 2 Minutes
+export const BOSS_SPAWN_INTERVAL = 50; // Faster pacing
 
 export const BALL_DEFINITIONS: Record<BallTypeId, BallDefinition> = {
   // A) SAFE TARGETS
   'red_common': {
     id: 'red_common', displayName: 'Target', rarityTag: 'COMMON',
     radius: 28, mass: 1, bounciness: 0.8,
-    coreColor: '#ef4444', glowColor: '#ff0055', glowRadius: 40, hasInnerDot: false, 
+    coreColor: '#ef4444', glowColor: '#ff0055', glowRadius: 40, hasInnerDot: false,
     points: 100, juiceDelta: 25, isTarget: true, destroyableByDirectHit: true,
     symbol: 'none'
   },
@@ -31,11 +31,11 @@ export const BALL_DEFINITIONS: Record<BallTypeId, BallDefinition> = {
     points: 5000, moneyReward: 50, juiceDelta: 50, isTarget: true, destroyableByDirectHit: true
   },
   'mini_ball': {
-      id: 'mini_ball', displayName: 'Mini', rarityTag: 'SPECIAL',
-      radius: 18, mass: 0.5, bounciness: 0.9, 
-      coreColor: '#ff00ff', glowColor: '#ff00ff', glowRadius: 30,
-      points: 50, juiceDelta: 10, isTarget: true, destroyableByDirectHit: true,
-      symbol: 'none'
+    id: 'mini_ball', displayName: 'Mini', rarityTag: 'SPECIAL',
+    radius: 18, mass: 0.5, bounciness: 0.9,
+    coreColor: '#ff00ff', glowColor: '#ff00ff', glowRadius: 30,
+    points: 50, juiceDelta: 10, isTarget: true, destroyableByDirectHit: true,
+    symbol: 'none'
   },
 
   // B) UTILITY
@@ -50,7 +50,7 @@ export const BALL_DEFINITIONS: Record<BallTypeId, BallDefinition> = {
     id: 'pink_launch', displayName: 'Wild', rarityTag: 'UNCOMMON',
     radius: 26, mass: 2, bounciness: 1.5,
     coreColor: '#d946ef', glowColor: '#f0abfc', glowRadius: 35,
-    points: 100, isTarget: true, destroyableByDirectHit: true, 
+    points: 100, isTarget: true, destroyableByDirectHit: true,
     specialEffect: 'RANDOM_LAUNCH',
     symbol: 'none'
   },
@@ -58,7 +58,7 @@ export const BALL_DEFINITIONS: Record<BallTypeId, BallDefinition> = {
     id: 'arrow_launch', displayName: 'Boost', rarityTag: 'UNCOMMON',
     radius: 26, mass: 2, bounciness: 1.2,
     coreColor: '#06b6d4', glowColor: '#22d3ee', glowRadius: 35, symbol: 'ARROW',
-    points: 600, isTarget: true, destroyableByDirectHit: true, 
+    points: 600, isTarget: true, destroyableByDirectHit: true,
     specialEffect: 'ARROW_LAUNCH'
   },
 
@@ -83,7 +83,7 @@ export const BALL_DEFINITIONS: Record<BallTypeId, BallDefinition> = {
     id: 'black_hole', displayName: 'Void', rarityTag: 'ULTRA_RARE',
     radius: 50, mass: 1000, bounciness: 0,
     coreColor: '#000000', glowColor: '#9333ea', glowRadius: 60,
-    points: 0, isHazard: true, lethalOnTouch: false, 
+    points: 0, isHazard: true, lethalOnTouch: false,
     specialEffect: 'BLACK_HOLE',
     symbol: 'none'
   },

@@ -83,7 +83,18 @@ export const renderGame = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
     });
 
     // Entities
+    const vpW = width / zoom;
+    const vpH = height / zoom;
+    const margin = 600; // Generous margin to prevent pop-in
+
     state.world.entities.forEach(e => {
+        // OPTIMIZATION: Viewport Culling
+        const relX = e.position.x - state.camera.position.x;
+        const relY = e.position.y - state.camera.position.y;
+        if (Math.abs(relX) > vpW / 2 + margin || Math.abs(relY) > vpH / 2 + margin) {
+            return;
+        }
+
         if (e.type === 'boss' && e.bossData) { renderBoss(ctx, e, state.visuals.time); return; }
 
         ctx.save();

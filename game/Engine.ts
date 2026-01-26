@@ -48,8 +48,17 @@ interface GameCallbacks {
  */
 export const updateGame = (state: GameState, dt: number, upgrades: Upgrades, callbacks: GameCallbacks) => {
     // --- TIME SCALE / SLOW MO ---
-    const targetScale = state.input.isDragging ? upgrades.slowMoTimeScale : 1.0;
-    state.time.scale += (targetScale - state.time.scale) * 10 * dt;
+    // --- TIME SCALE / SLOW MO ---
+    const dyingBoss = state.world.entities.find(e => e.type === 'boss' && e.bossData?.state === 'DYING');
+
+    if (dyingBoss) {
+        // Cinematic Slow Mo
+        state.time.scale += (0.15 - state.time.scale) * 5 * dt;
+    } else {
+        // Normal Gameplay / Drag Slow Mo
+        const targetScale = state.input.isDragging ? upgrades.slowMoTimeScale : 1.0;
+        state.time.scale += (targetScale - state.time.scale) * 10 * dt;
+    }
     const gameDt = dt * state.time.scale;
 
     state.visuals.time += dt;

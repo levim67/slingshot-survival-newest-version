@@ -88,6 +88,15 @@ export const updateGenericEntities = (
     dt: number,
     entitiesToRemove: Set<string>
 ): boolean => {
+    // OPTIMIZATION: Aggressive Culling for distant entities (Anti-Lag)
+    if (dist(entity.position, state.player.position) > 4000) {
+        // Don't cull bosses or walls (structure) immediately, but remove projectiles/particles
+        if (entity.type !== 'boss' && entity.type !== 'wall') {
+            entitiesToRemove.add(entity.id);
+            return false;
+        }
+    }
+
     if (entity.type === 'particle' || entity.type === 'shockwave' || entity.type === 'floating_text' || entity.type === 'lightning' || entity.type === 'shockwave_ring' || entity.type === 'wall') {
         if (entity.type === 'particle') {
             if (entity.drag) entity.velocity = mult(entity.velocity || { x: 0, y: 0 }, entity.drag);
