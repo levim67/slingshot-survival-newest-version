@@ -19,9 +19,9 @@ export const renderGame = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
     const speedFactor = Math.min(speed / 2000, 1.0); // Reach max zoom out faster (was 3000)
     const dragFactor = state.input.isDragging ? 1.0 : 0.0;
 
-    // Increased zoom out range (0.2 -> 0.35)
-    const targetZoomOffset = (speedFactor * 0.35) + (dragFactor * 0.15);
-    const effectiveZoom = Math.max(0.3, baseZoom - targetZoomOffset);
+    // Reduced zoom out range (0.35 -> 0.15) to prevent motion sickness
+    const targetZoomOffset = (speedFactor * 0.15) + (dragFactor * 0.05);
+    const effectiveZoom = Math.max(0.6, baseZoom - targetZoomOffset);
     state.camera.zoom += (effectiveZoom - state.camera.zoom) * 0.05; // Slower zoom for smoothness
     const zoom = state.camera.zoom;
 
@@ -337,17 +337,14 @@ export const renderGame = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
                         const rotSpeed = def.spikeStyle === 'super' ? 0.8 : 0.4;
                         ctx.rotate(state.visuals.time * rotSpeed);
 
-                        // Gentle Pulse
-                        const pulse = 1 + Math.sin(state.visuals.time * 3) * 0.05;
-                        ctx.scale(pulse, pulse);
-
+                        // Removed Pulse to avoid "distortion"
                         // Glow
                         ctx.shadowColor = def.glowColor;
                         ctx.shadowBlur = def.glowRadius || 20;
 
                         // Draw Image centered
                         // Adjust size multiplier to fit hitbox (radius) visually
-                        const size = e.radius * 2.6;
+                        const size = e.radius * 2.2;
                         ctx.drawImage(img, -size / 2, -size / 2, size, size);
 
                         ctx.restore();
