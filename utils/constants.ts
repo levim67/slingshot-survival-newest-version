@@ -69,7 +69,7 @@ export const BALL_DEFINITIONS: Record<BallTypeId, BallDefinition> = {
     coreColor: '#22c55e', glowColor: '#4ade80', glowRadius: 60, spikeStyle: 'normal',
     points: 400, isHazard: true, lethalOnTouch: true,
     specialEffect: 'NONE',
-    imageSrc: '/assets/green_spike.png',
+    imageSrc: './assets/green_spike.png',
     symbol: 'none'
   },
   'spike_super': {
@@ -78,7 +78,7 @@ export const BALL_DEFINITIONS: Record<BallTypeId, BallDefinition> = {
     coreColor: '#ef4444', glowColor: '#f87171', glowRadius: 75, spikeStyle: 'super',
     points: 1200, isHazard: true, lethalOnTouch: true,
     specialEffect: 'NONE',
-    imageSrc: '/assets/red_spike.png',
+    imageSrc: './assets/red_spike.png',
     symbol: 'none'
   },
   'black_hole': {
