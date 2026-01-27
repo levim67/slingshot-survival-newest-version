@@ -7,6 +7,10 @@ import { updateGame, createLavaParticle, spawnDirectionalBurst, initializeWorld 
 import { renderGame } from '../game/Renderer';
 import { BOSS_SPAWN_INTERVAL, BALL_DEFINITIONS } from '../utils/constants';
 
+// Static image imports for spike assets (Vite resolves these correctly)
+const greenSpikeImg = new URL('/assets/green_spike.png', import.meta.url).href;
+const redSpikeImg = new URL('/assets/red_spike.png', import.meta.url).href;
+
 interface GameCanvasProps {
   status: GameStateStatus;
   gameId: number;
@@ -54,17 +58,20 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ status, gameId, upgrades, autoB
     }
   }, []);
 
-  // Preload Images
+  // Preload Images - Use URL-resolved paths for spikes
   useEffect(() => {
-    Object.keys(BALL_DEFINITIONS).forEach(key => {
-      const def = BALL_DEFINITIONS[key as any];
-      if (def.imageSrc) {
-        const img = new Image();
-        img.onload = () => console.log(`[IMG] Loaded: ${key} from ${def.imageSrc}`);
-        img.onerror = (e) => console.error(`[IMG] FAILED: ${key} from ${def.imageSrc}`, e);
-        img.src = def.imageSrc;
-        imagesRef.current[key] = img;
-      }
+    // Manually map spike IDs to resolved URLs
+    const spikeImages: Record<string, string> = {
+      'spike_normal': greenSpikeImg,
+      'spike_super': redSpikeImg
+    };
+
+    Object.entries(spikeImages).forEach(([key, src]) => {
+      const img = new Image();
+      img.onload = () => console.log(`[IMG] Loaded: ${key} from ${src}`);
+      img.onerror = (e) => console.error(`[IMG] FAILED: ${key} from ${src}`, e);
+      img.src = src;
+      imagesRef.current[key] = img;
     });
   }, []);
 
