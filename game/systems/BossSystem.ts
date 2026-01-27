@@ -396,76 +396,139 @@ const spawnClosingWalls = (state: GameState, center: Vector2) => {
 };
 
 /**
- * Updates Worm Devourer boss AI - head chasing and body following
+ * Updates Worm Devourer boss AI - Terraria Destroyer inspired!
+ * Phases: WORM_CHASE -> WORM_RETREAT -> WORM_CHARGE -> repeat
  */
 export const updateWormAI = (state: GameState, segments: Entity[], dt: number) => {
     const heads = segments.filter(e => e.bossData?.wormSegmentType === 'HEAD');
+
     heads.forEach(head => {
         if (!head.bossData) return;
+        const data = head.bossData;
 
         // Handle DYING state for Head
-        if (head.bossData.state === 'DYING') {
+        if (data.state === 'DYING') {
             handleBossDeathSequence(state, head, dt);
             return;
         }
 
-        if (head.bossData.invincibilityTimer > 0) head.bossData.invincibilityTimer -= dt;
+        if (data.invincibilityTimer > 0) data.invincibilityTimer -= dt;
+        data.stateTimer -= dt;
+
         const toPlayer = sub(state.player.position, head.position);
-
-        // RUBBER BAND CATCHUP
         const distToPlayer = mag(toPlayer);
-        let moveSpeed = 900;
-        let turnSpeed = 4.0;
+        const awayFromPlayer = mult(normalize(toPlayer), -1);
 
-        if (distToPlayer > 1500) {
-            moveSpeed = 2500;
-            turnSpeed = 8.0;
+        // STATE MACHINE
+        switch (data.state) {
+            case 'WORM_CHASE': {
+                // Chase player with wave motion
+                let moveSpeed = 1000;
+                let turnSpeed = 5.0;
+
+                // Rubber band catchup
+                if (distToPlayer > 1500) { moveSpeed = 2500; turnSpeed = 10.0; }
+                if (distToPlayer > 3000) { moveSpeed = 4000; turnSpeed = 15.0; }
+
+                const wave = Math.sin(state.visuals.time * 3 + head.id.charCodeAt(0)) * 250;
+                const idealDir = normalize(toPlayer);
+                const desiredVel = mult(idealDir, moveSpeed);
+                desiredVel.y += wave;
+
+                const steer = turnSpeed * dt;
+                const currentVel = head.velocity || { x: 0, y: 0 };
+                head.velocity = {
+                    x: currentVel.x + (desiredVel.x - currentVel.x) * steer,
+                    y: currentVel.y + (desiredVel.y - currentVel.y) * steer
+                };
+
+                // Random acid spit during chase
+                if (Math.random() < 0.05) spawnAcidSpit(state, head.position, state.player.position);
+
+                // Transition to RETREAT after chase timer
+                if (data.stateTimer <= 0) {
+                    data.state = 'WORM_RETREAT' as any;
+                    data.stateTimer = 1.5; // Retreat for 1.5 seconds
+                    audio.playSFX('charge', 0.5);
+                }
+                break;
+            }
+
+            case 'WORM_RETREAT' as any: {
+                // Fly AWAY from player quickly to build distance
+                const retreatSpeed = 2000;
+                const retreatDir = awayFromPlayer;
+                head.velocity = mult(retreatDir, retreatSpeed);
+
+                // Transition to CHARGE after getting distance
+                if (data.stateTimer <= 0) {
+                    data.state = 'WORM_CHARGE' as any;
+                    data.stateTimer = 0.8; // Charge duration
+                    audio.playSFX('boss_roar', 1.0);
+                    addShake(state, 10);
+                    spawnFloatingText(state, head.position, "!!!", '#ff0000');
+                }
+                break;
+            }
+
+            case 'WORM_CHARGE' as any: {
+                // HIGH-SPEED dash directly at player!
+                const chargeSpeed = 3500;
+                const chargeDir = normalize(toPlayer);
+                head.velocity = mult(chargeDir, chargeSpeed);
+
+                // Spawn trail of acid during charge
+                if (Math.random() < 0.15) spawnAcidSpit(state, head.position, state.player.position);
+
+                // Transition back to CHASE
+                if (data.stateTimer <= 0) {
+                    data.state = 'WORM_CHASE';
+                    data.stateTimer = randomRange(4, 7); // Random chase duration
+                    data.attackCounter++;
+                }
+                break;
+            }
+
+            default:
+                // Fallback to chase if unknown state
+                data.state = 'WORM_CHASE';
+                data.stateTimer = 5;
         }
-        if (distToPlayer > 3000) {
-            moveSpeed = 4000;
-            turnSpeed = 15.0;
-        }
 
-        const wave = Math.sin(state.visuals.time * 3 + head.id.charCodeAt(0)) * 300;
-        const idealDir = normalize(toPlayer);
-        const desiredVel = mult(idealDir, moveSpeed);
-        desiredVel.y += wave;
-
-        const steer = turnSpeed * dt;
-        const currentVel = head.velocity || { x: 0, y: 0 };
-        head.velocity = {
-            x: currentVel.x + (desiredVel.x - currentVel.x) * steer,
-            y: currentVel.y + (desiredVel.y - currentVel.y) * steer
-        };
-        head.rotation = Math.atan2(head.velocity.y, head.velocity.x);
-        head.position = add(head.position, mult(head.velocity, dt));
-
-        if (Math.random() < 0.04) spawnAcidSpit(state, head.position, state.player.position);
+        // Update position and rotation
+        head.rotation = Math.atan2(head.velocity!.y, head.velocity!.x);
+        head.position = add(head.position, mult(head.velocity!, dt));
     });
 
+    // Freeze all if any head is dying
     if (heads.some(h => h.bossData?.state === 'DYING')) {
-        // CRITICAL Fix: Freeze ALL segments to prevent "flying"
         segments.forEach(s => s.velocity = { x: 0, y: 0 });
         return;
     }
 
+    // BODY SEGMENTS - Follow the chain
     const bodies = segments.filter(e => e.bossData?.wormSegmentType !== 'HEAD');
     bodies.forEach(seg => {
         if (!seg.bossData) return;
         if (seg.bossData.invincibilityTimer > 0) seg.bossData.invincibilityTimer -= dt;
+
         const leader = segments.find(e => e.id === seg.bossData?.wormPrevSegmentId);
         if (leader) {
             const d = dist(leader.position, seg.position);
-            if (d > 55) {
+            const followDist = 45; // Tighter spacing for long worm
+            if (d > followDist) {
                 const dir = normalize(sub(leader.position, seg.position));
-                seg.position = add(seg.position, mult(dir, (d - 55) * 10 * dt));
+                seg.position = add(seg.position, mult(dir, (d - followDist) * 12 * dt));
                 seg.rotation = Math.atan2(dir.y, dir.x);
             }
         } else {
+            // Orphaned segment (split worm) - Apply gravity
             seg.velocity = add(seg.velocity || { x: 0, y: 0 }, { x: 0, y: GRAVITY * dt });
             seg.position = add(seg.position, mult(seg.velocity || { x: 0, y: 0 }, dt));
         }
-        if (Math.random() < 0.002) spawnAcidSpit(state, seg.position, state.player.position);
+
+        // Body segments occasionally spit acid too
+        if (Math.random() < 0.003) spawnAcidSpit(state, seg.position, state.player.position);
     });
 };
 

@@ -60,6 +60,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ status, gameId, upgrades, autoB
       const def = BALL_DEFINITIONS[key as any];
       if (def.imageSrc) {
         const img = new Image();
+        img.onload = () => console.log(`[IMG] Loaded: ${key} from ${def.imageSrc}`);
+        img.onerror = (e) => console.error(`[IMG] FAILED: ${key} from ${def.imageSrc}`, e);
         img.src = def.imageSrc;
         imagesRef.current[key] = img;
       }

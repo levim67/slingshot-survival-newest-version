@@ -31,13 +31,13 @@ export const spawnCubeBoss = (state: GameState) => {
  * Spawns the Worm Devourer boss with multiple segments
  */
 export const spawnWormBoss = (state: GameState) => {
-    const segments = 15;
-    const hpPerSeg = 3500;
+    const segments = 45; // Much longer! (was 15)
+    const hpPerSeg = 2000; // Balanced for more segments
     state.boss.maxHealth = segments * hpPerSeg;
     spawnFloatingText(state, { x: state.player.position.x, y: state.player.position.y - 400 }, "WARNING: THE DEVOURER AWAKENS", '#a3e635');
     audio.playSFX('boss_roar');
-    const startX = state.player.position.x - 1000;
-    const startY = state.player.position.y + 500;
+    const startX = state.player.position.x - 1500;
+    const startY = state.player.position.y + 800;
     let prevId: string | undefined = undefined;
     const segs: Entity[] = [];
     for (let i = 0; i < segments; i++) {
@@ -47,13 +47,13 @@ export const spawnWormBoss = (state: GameState) => {
         const type = isHead ? 'HEAD' : (isTail ? 'TAIL' : 'BODY');
         segs.push({
             id: id, type: 'boss',
-            position: { x: startX - (i * 60), y: startY + (i * 60) },
-            radius: isHead ? 60 : 50,
+            position: { x: startX - (i * 50), y: startY + (i * 40) },
+            radius: isHead ? 65 : 45,
             color: isHead ? '#a3e635' : (isTail ? '#3f6212' : '#65a30d'),
-            velocity: { x: 400, y: -400 },
+            velocity: { x: 600, y: -400 },
             bossData: {
                 type: 'WORM_DEVOURER', maxHealth: hpPerSeg, currentHealth: hpPerSeg,
-                state: 'WORM_CHASE', stateTimer: 0, attackCounter: 0, invincibilityTimer: 0,
+                state: 'WORM_CHASE', stateTimer: randomRange(5, 8), attackCounter: 0, invincibilityTimer: 0,
                 wormSegmentType: type, wormPrevSegmentId: prevId
             }
         });
