@@ -162,8 +162,17 @@ export const updateTriangleBossAI = (state: GameState, boss: Entity, dt: number)
             break;
 
         case 'IDLE_VULNERABLE':
-            // Core exposed visual logic could go here (e.g. change color)
-            boss.color = '#22d3ee'; // Cyan glow
+            // === CLEAR VULNERABILITY INDICATOR ===
+            boss.color = '#22d3ee'; // Cyan glow - VULNERABLE color
+
+            // Pulsing size effect when vulnerable
+            boss.radius = 80 + Math.sin(state.visuals.time * 10) * 10;
+
+            // Show "ATTACK NOW!" every second to remind player
+            if (Math.floor(data.stateTimer * 2) !== Math.floor((data.stateTimer + 0.1) * 2) || data.stateTimer === state.boss.lastHealth / 1000) {
+                spawnFloatingText(state, { x: boss.position.x, y: boss.position.y - 100 }, '⚔️ ATTACK NOW! ⚔️', '#00ff00');
+            }
+
             if (data.stateTimer <= 0) {
                 // Pick next attack
                 const r = Math.random();
@@ -174,7 +183,9 @@ export const updateTriangleBossAI = (state: GameState, boss: Entity, dt: number)
                 else { data.state = 'MISSILE_STORM'; data.stateTimer = 0.5; data.subStage = 5; }
 
                 boss.color = '#06b6d4'; // Armored color
+                boss.radius = 80; // Reset radius
                 audio.playSFX('charge', 0.8);
+                spawnFloatingText(state, { x: boss.position.x, y: boss.position.y - 80 }, '🛡️ SHIELDED 🛡️', '#ff0000');
             }
             break;
 

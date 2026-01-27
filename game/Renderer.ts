@@ -241,6 +241,89 @@ export const renderGame = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
                 ctx.beginPath(); ctx.moveTo(10, 0); ctx.lineTo(-8, 6); ctx.lineTo(-4, 0); ctx.lineTo(-8, -6); ctx.closePath(); ctx.fill();
             }
         }
+        // === LASER BEAM WALLS ===
+        else if (e.type === 'wall') {
+            const w = e.width || 100;
+            const h = e.height || 100;
+            const isHorizontal = w > h;
+            const pulse = 0.8 + Math.sin(state.visuals.time * 15) * 0.2; // Fast pulse
+
+            ctx.save();
+            // Core laser beam - red hot energy
+            const laserGrad = ctx.createLinearGradient(
+                isHorizontal ? -w / 2 : 0, isHorizontal ? 0 : -h / 2,
+                isHorizontal ? w / 2 : 0, isHorizontal ? 0 : h / 2
+            );
+            laserGrad.addColorStop(0, '#ff0000');
+            laserGrad.addColorStop(0.3, '#ff6600');
+            laserGrad.addColorStop(0.5, '#ffff00');
+            laserGrad.addColorStop(0.7, '#ff6600');
+            laserGrad.addColorStop(1, '#ff0000');
+
+            // Outer glow
+            ctx.shadowColor = '#ff0000';
+            ctx.shadowBlur = 30 * pulse;
+            ctx.fillStyle = laserGrad;
+
+            // Draw main beam (thinner than hitbox for visual appeal)
+            const beamThickness = isHorizontal ? h * 0.6 : w * 0.6;
+            ctx.fillRect(-w / 2, -h / 2, w, h);
+
+            // Inner white hot core
+            ctx.fillStyle = `rgba(255, 255, 200, ${0.5 + pulse * 0.3})`;
+            const coreThickness = isHorizontal ? h * 0.2 : w * 0.2;
+            if (isHorizontal) {
+                ctx.fillRect(-w / 2, -coreThickness / 2, w, coreThickness);
+            } else {
+                ctx.fillRect(-coreThickness / 2, -h / 2, coreThickness, h);
+            }
+
+            // ROBOT EMITTERS at each end
+            const robotSize = Math.min(w, h) * 0.8;
+            const drawRobot = (x: number, y: number) => {
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(state.visuals.time * 2);
+
+                // Robot body - metallic sphere
+                const robotGrad = ctx.createRadialGradient(-robotSize * 0.2, -robotSize * 0.2, 0, 0, 0, robotSize);
+                robotGrad.addColorStop(0, '#888888');
+                robotGrad.addColorStop(0.5, '#444444');
+                robotGrad.addColorStop(1, '#111111');
+                ctx.fillStyle = robotGrad;
+                ctx.beginPath();
+                ctx.arc(0, 0, robotSize, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Glowing eye/emitter core
+                ctx.shadowColor = '#ff0000';
+                ctx.shadowBlur = 15;
+                ctx.fillStyle = '#ff0000';
+                ctx.beginPath();
+                ctx.arc(0, 0, robotSize * 0.4, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Tech details - rotating ring
+                ctx.strokeStyle = '#666666';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(0, 0, robotSize * 0.7, 0, Math.PI);
+                ctx.stroke();
+
+                ctx.restore();
+            };
+
+            // Place robots at ends of beam
+            if (isHorizontal) {
+                drawRobot(-w / 2 - robotSize, 0);
+                drawRobot(w / 2 + robotSize, 0);
+            } else {
+                drawRobot(0, -h / 2 - robotSize);
+                drawRobot(0, h / 2 + robotSize);
+            }
+
+            ctx.restore();
+        }
         else if (e.type === 'ball' && e.ballDef) {
             const def = e.ballDef;
             if (def.id === 'missile_battery') {
@@ -441,26 +524,7 @@ export const renderGame = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
                 }
             }
         }
-        else if (e.type === 'wall') {
-            const w = e.width || 100;
-            const h = e.height || 100;
-
-            // Dynamic Pulse
-            const pulse = 1 + Math.sin(state.visuals.time * 5) * 0.05;
-            ctx.scale(pulse, pulse);
-
-            ctx.shadowBlur = 20;
-            ctx.shadowColor = e.color;
-            ctx.fillStyle = e.color;
-            ctx.fillRect(-w / 2, -h / 2, w, h);
-
-            // Inner Bright
-            ctx.fillStyle = '#ffffff';
-            ctx.globalAlpha = 0.3;
-            ctx.fillRect(-w / 2 + 5, -h / 2 + 5, w - 10, h - 10);
-            ctx.globalAlpha = 1.0;
-            ctx.shadowBlur = 0;
-        }
+        // Wall rendering moved earlier in file (laser beams)
         else if (e.type === 'particle' || e.type === 'shockwave' || e.type === 'lightning' || e.type === 'shockwave_ring') {
             // OPTIMIZATION: NO SHADOW BLUR FOR PARTICLES
             ctx.globalCompositeOperation = 'lighter';
