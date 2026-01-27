@@ -186,6 +186,26 @@ const App: React.FC = () => {
     }
   };
 
+  const handleResetProgress = () => {
+    setTotalCoins(0);
+    const defaults: Record<string, number> = {};
+    UPGRADE_ITEMS.forEach(item => defaults[item.id] = 0);
+    setUpgradeLevels(defaults);
+    setHighScore(0);
+    setBestDistance(0);
+    setUnlockedSkins(['default']);
+    setCurrentSkin('default');
+    setCameraZoom(0.6);
+    // Clear localStorage
+    localStorage.removeItem('slingshot_coins');
+    localStorage.removeItem('slingshot_upgrades_v5');
+    localStorage.removeItem('slingshot_skins');
+    localStorage.removeItem('slingshot_current_skin');
+    localStorage.removeItem('slingshot_highscore');
+    localStorage.removeItem('slingshot_best_distance');
+    localStorage.removeItem('slingshot_zoom');
+  };
+
   return (
     <div className="relative w-full h-screen bg-slate-900 overflow-hidden select-none">
       {/* Game Canvas is always mounted but logic pauses when not playing */}
@@ -209,6 +229,7 @@ const App: React.FC = () => {
           totalCoins={totalCoins}
           cameraZoom={cameraZoom}
           setCameraZoom={setCameraZoom}
+          onResetProgress={handleResetProgress}
         />
       )}
 

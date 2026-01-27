@@ -7,9 +7,9 @@ import { updateGame, createLavaParticle, spawnDirectionalBurst, initializeWorld 
 import { renderGame } from '../game/Renderer';
 import { BOSS_SPAWN_INTERVAL, BALL_DEFINITIONS } from '../utils/constants';
 
-// Static image imports for spike assets (Vite resolves these correctly)
-const greenSpikeImg = new URL('/assets/green_spike.png', import.meta.url).href;
-const redSpikeImg = new URL('/assets/red_spike.png', import.meta.url).href;
+// Static image imports for spike assets (Vite bundles these correctly)
+import greenSpikeImg from './assets/green_spike.png?url';
+import redSpikeImg from './assets/red_spike.png?url';
 
 interface GameCanvasProps {
   status: GameStateStatus;
