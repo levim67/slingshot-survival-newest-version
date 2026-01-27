@@ -7,9 +7,9 @@ import { updateGame, createLavaParticle, spawnDirectionalBurst, initializeWorld 
 import { renderGame } from '../game/Renderer';
 import { BOSS_SPAWN_INTERVAL, BALL_DEFINITIONS } from '../utils/constants';
 
-// Static image imports for spike assets (Vite bundles these correctly)
-import greenSpikeImg from './assets/green_spike.png?url';
-import redSpikeImg from './assets/red_spike.png?url';
+// Spike image URLs (using raw GitHub like LoadingScreen - this works!)
+const greenSpikeImg = 'https://raw.githubusercontent.com/levim67/slingshot-survival-assets/main/green%20spike.png';
+const redSpikeImg = 'https://raw.githubusercontent.com/levim67/slingshot-survival-assets/main/red%20spike.png';
 
 interface GameCanvasProps {
   status: GameStateStatus;
