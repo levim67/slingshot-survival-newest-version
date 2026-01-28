@@ -408,6 +408,8 @@ export const renderGame = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
             } else {
                 // ===== SPIKES - REDESIGNED =====
                 // ===== SPIKES - REDESIGNED (IMAGE SUPPORT) =====
+                let spikeImageRendered = false; // Track if we rendered an image (to skip main body)
+
                 if (def.spikeStyle && def.spikeStyle !== 'none') {
                     // Try bitmap first (more reliable), then Image
                     const bitmap = images ? (images as any)[def.id + '_bitmap'] : null;
@@ -471,6 +473,7 @@ export const renderGame = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
                         );
 
                         ctx.restore();
+                        spikeImageRendered = true; // Skip main body drawing!
 
                     } else {
                         // --- FALLBACK PROCEDURAL RENDERING ---
@@ -549,17 +552,19 @@ export const renderGame = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
                     }
                 }
 
-                // MAIN BODY
-                // OPTIMIZATION: Cap glow radius
-                const glow = Math.min(def.glowRadius || 0, 15);
-                ctx.shadowBlur = glow; ctx.shadowColor = def.glowColor; ctx.fillStyle = def.coreColor; ctx.beginPath(); ctx.arc(0, 0, e.radius, 0, Math.PI * 2); ctx.fill();
-                ctx.shadowBlur = 0; ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.beginPath(); ctx.arc(-e.radius * 0.3, -e.radius * 0.3, e.radius * 0.2, 0, Math.PI * 2); ctx.fill();
+                // MAIN BODY - Skip if we rendered a spike image!
+                if (!spikeImageRendered) {
+                    // OPTIMIZATION: Cap glow radius
+                    const glow = Math.min(def.glowRadius || 0, 15);
+                    ctx.shadowBlur = glow; ctx.shadowColor = def.glowColor; ctx.fillStyle = def.coreColor; ctx.beginPath(); ctx.arc(0, 0, e.radius, 0, Math.PI * 2); ctx.fill();
+                    ctx.shadowBlur = 0; ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.beginPath(); ctx.arc(-e.radius * 0.3, -e.radius * 0.3, e.radius * 0.2, 0, Math.PI * 2); ctx.fill();
 
-                if (def.symbol && def.symbol !== 'none') {
-                    if (def.symbol === 'ARROW') {
-                        ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.beginPath(); ctx.moveTo(10, 0); ctx.lineTo(-5, -8); ctx.lineTo(-5, 8); ctx.fill(); ctx.fillRect(-15, -1.5, 10, 3);
-                    } else {
-                        ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.font = `bold ${e.radius}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(def.symbol, 0, 2);
+                    if (def.symbol && def.symbol !== 'none') {
+                        if (def.symbol === 'ARROW') {
+                            ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.beginPath(); ctx.moveTo(10, 0); ctx.lineTo(-5, -8); ctx.lineTo(-5, 8); ctx.fill(); ctx.fillRect(-15, -1.5, 10, 3);
+                        } else {
+                            ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.font = `bold ${e.radius}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(def.symbol, 0, 2);
+                        }
                     }
                 }
             }
