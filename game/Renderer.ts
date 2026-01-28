@@ -504,6 +504,21 @@ export const renderGame = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
                         // No shadow/glow - it can cause visible edges on transparent images
                         ctx.shadowBlur = 0;
 
+                        // BACKLIGHT GLOW: Draw a glowing circle BEHIND the image
+                        // This avoids the "box outline" artifact while still providing a premium glow
+                        ctx.save();
+                        ctx.globalCompositeOperation = 'screen'; // Make it pop
+                        ctx.shadowColor = def.glowColor || '#ffffff';
+                        ctx.shadowBlur = 40; // Soft wide glow
+                        ctx.fillStyle = def.glowColor || '#ffffff';
+                        ctx.beginPath();
+                        ctx.arc(0, 0, e.radius * 0.8, 0, Math.PI * 2);
+                        ctx.fill();
+                        // Double glow for core intensity
+                        ctx.shadowBlur = 15;
+                        ctx.fill();
+                        ctx.restore();
+
                         // Draw Image centered - larger size for better visibility
                         const size = e.radius * 3.5;
 
