@@ -450,16 +450,25 @@ export const renderGame = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
                             console.log(`[DRAW DEBUG] Drawing ${drawType} for ${def.id} at size=${size.toFixed(0)}, pos=(${e.position.x.toFixed(0)}, ${e.position.y.toFixed(0)})`);
                         }
 
-                        // VISUAL DEBUG: Draw bright magenta border to verify position
-                        ctx.strokeStyle = '#ff00ff';
-                        ctx.lineWidth = 3;
-                        ctx.strokeRect(-size / 2, -size / 2, size, size);
-
                         // Use bitmap if available, otherwise image
                         const drawSource = isValidBitmap ? bitmap : img;
 
-                        // Draw actual image/bitmap
-                        ctx.drawImage(drawSource, -size / 2, -size / 2, size, size);
+                        // Get source dimensions
+                        const srcW = isValidBitmap ? bitmap.width : img.naturalWidth;
+                        const srcH = isValidBitmap ? bitmap.height : img.naturalHeight;
+
+                        // Extract CENTER SQUARE from the source image
+                        // (handles wide images like 3040x1408 where spike is centered)
+                        const squareSize = Math.min(srcW, srcH);
+                        const srcX = (srcW - squareSize) / 2;
+                        const srcY = (srcH - squareSize) / 2;
+
+                        // Draw just the center square portion
+                        ctx.drawImage(
+                            drawSource,
+                            srcX, srcY, squareSize, squareSize,  // Source: center square
+                            -size / 2, -size / 2, size, size     // Dest: our target area
+                        );
 
                         ctx.restore();
 
