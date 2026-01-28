@@ -313,24 +313,37 @@ export const spawnDebrisExplosion = (
         id: `flash_${Math.random()}`,
         type: 'particle',
         position: { ...pos },
-        radius: 80, // Large
+        radius: 120, // Huge initial flash
         color: '#ffffff',
         velocity: { x: 0, y: 0 },
-        lifeTime: 0.15, // Very short
+        lifeTime: 0.1, // Blink and it's gone
         shape: 'circle',
         drag: 0, gravity: false,
-        scaleDecay: true // Shrinks fast
+        scaleDecay: true
     });
 
-    // 2. DEBRIS CHUNKS: The main event
+    // 2. SHOCKWAVE RING
+    state.world.entities.push({
+        id: `ring_${Math.random()}`,
+        type: 'shockwave_ring',
+        position: { ...pos },
+        radius: 10,  // Starts small
+        color: baseColor,
+        velocity: { x: 0, y: 0 },
+        lifeTime: 0.4, // Expands fast
+        width: 15,
+        drag: 0, gravity: false,
+    });
+
+    // 3. DEBRIS CHUNKS: Explosive Burst -> Space Float
     for (let i = 0; i < count; i++) {
         const angle = randomRange(0, Math.PI * 2);
-        // Vary speed for depth
-        const speed = randomRange(100, 600);
+        // Explosive initial speed!
+        const speed = randomRange(400, 1000);
         const img = chunkImages[Math.floor(randomRange(0, chunkImages.length))];
 
         // Randomize size
-        const size = Math.random() > 0.7 ? randomRange(30, 45) : randomRange(15, 25);
+        const size = Math.random() > 0.7 ? randomRange(35, 55) : randomRange(20, 30);
 
         state.world.entities.push({
             id: `debris_img_${Math.random()}`,
@@ -339,54 +352,55 @@ export const spawnDebrisExplosion = (
             velocity: { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed },
             radius: size,
             rotation: randomRange(0, Math.PI * 2),
-            angularVelocity: randomRange(-15, 15), // Spin!
-            lifeTime: randomRange(1.0, 2.0),
+            angularVelocity: randomRange(-20, 20), // Fast spin
+            lifeTime: randomRange(1.5, 2.5), // Long life for float
             gravity: true,
-            drag: 0.94, // Float a bit
+            drag: 0.92, // Strong drag to simulate "Burst -> Float"
             imageSrc: img,
             color: baseColor,
-            scaleDecay: true
+            scaleDecay: true // Shrinks slowly while floating
         });
     }
 
-    // 3. SPARKS: Fast, bright, short-lived lines/dots
-    const sparkCount = 20;
+    // 4. SPARKS: High velocity streaks
+    const sparkCount = 30;
     for (let i = 0; i < sparkCount; i++) {
         const angle = randomRange(0, Math.PI * 2);
-        const speed = randomRange(400, 900); // Very fast
+        const speed = randomRange(800, 1500); // Super fast
         state.world.entities.push({
             id: `spark_${Math.random()}`,
             type: 'particle',
             position: { ...pos },
-            radius: randomRange(2, 4),
-            color: '#ffcc00', // Gold/Yellow sparks
+            radius: randomRange(2, 5),
+            color: '#ffcc00', // Gold
             velocity: { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed },
-            lifeTime: randomRange(0.3, 0.6),
-            shape: 'square', // Looks sharp
-            drag: 0.85, // Slows down quickly
+            lifeTime: randomRange(0.3, 0.7),
+            shape: 'square',
+            drag: 0.88, // Decelerates
             gravity: true,
-            scaleDecay: true
+            scaleDecay: true,
+            isSpark: true
         });
     }
 
-    // 4. SMOKE/FIRE: Slow expanding background
-    const smokeCount = 10;
+    // 5. SMOKE: Expanding clouds
+    const smokeCount = 12;
     for (let i = 0; i < smokeCount; i++) {
         const angle = randomRange(0, Math.PI * 2);
         const speed = randomRange(20, 100);
-        const isFire = Math.random() > 0.5;
+        const isFire = Math.random() > 0.6;
         state.world.entities.push({
             id: `smoke_${Math.random()}`,
             type: 'particle',
             position: { ...pos },
-            radius: randomRange(20, 40),
-            color: isFire ? '#f97316' : '#444444', // Orange or Dark Grey
+            radius: randomRange(20, 30),
+            color: isFire ? '#f97316' : '#555555',
             velocity: { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed },
-            lifeTime: randomRange(0.8, 1.5),
+            lifeTime: randomRange(1.0, 2.0),
             shape: 'smoke',
-            drag: 0.9,
+            drag: 0.92,
             gravity: false,
-            scaleDecay: true // Will actually look like fading if we rendered opacity, but shrinking works too
+            scaleDecay: true
         });
     }
 };
