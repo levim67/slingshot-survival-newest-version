@@ -293,43 +293,100 @@ export const triggerChainLightning = (
 };
 
 /**
- * Spawns a high-fidelity image-based debris explosion
+ * Spawns a high-fidelity image-based debris explosion with sparks, smoke, and flash
  */
 export const spawnDebrisExplosion = (
     state: GameState,
     pos: Vector2,
     baseColor: string,
     chunkImages: string[],
-    count: number = 15
+    count: number = 12
 ) => {
-    // Check limits
+    // Check global limits to prevent lag
     if (getActiveDebrisCount(state) > MAX_ACTIVE_DEBRIS) {
         spawnExplosion(state, pos, baseColor, baseColor, { x: 0, y: 0 });
         return;
     }
 
+    // 1. FLASH: Central bright burst
+    state.world.entities.push({
+        id: `flash_${Math.random()}`,
+        type: 'particle',
+        position: { ...pos },
+        radius: 80, // Large
+        color: '#ffffff',
+        velocity: { x: 0, y: 0 },
+        lifeTime: 0.15, // Very short
+        shape: 'circle',
+        drag: 0, gravity: false,
+        scaleDecay: true // Shrinks fast
+    });
+
+    // 2. DEBRIS CHUNKS: The main event
     for (let i = 0; i < count; i++) {
         const angle = randomRange(0, Math.PI * 2);
-        const speed = randomRange(200, 700);
+        // Vary speed for depth
+        const speed = randomRange(100, 600);
         const img = chunkImages[Math.floor(randomRange(0, chunkImages.length))];
+
+        // Randomize size
+        const size = Math.random() > 0.7 ? randomRange(30, 45) : randomRange(15, 25);
 
         state.world.entities.push({
             id: `debris_img_${Math.random()}`,
             type: 'debris',
             position: { ...pos },
             velocity: { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed },
-            radius: randomRange(20, 40), // Size of chunk
+            radius: size,
             rotation: randomRange(0, Math.PI * 2),
-            angularVelocity: randomRange(-10, 10),
-            lifeTime: randomRange(0.8, 1.5),
+            angularVelocity: randomRange(-15, 15), // Spin!
+            lifeTime: randomRange(1.0, 2.0),
             gravity: true,
-            drag: 0.95,
+            drag: 0.94, // Float a bit
             imageSrc: img,
-            color: baseColor, // Fallback/Tint
+            color: baseColor,
             scaleDecay: true
         });
     }
 
-    // Add some standard particles for dust/filler
-    spawnExplosion(state, pos, baseColor, baseColor, { x: 0, y: 0 });
+    // 3. SPARKS: Fast, bright, short-lived lines/dots
+    const sparkCount = 20;
+    for (let i = 0; i < sparkCount; i++) {
+        const angle = randomRange(0, Math.PI * 2);
+        const speed = randomRange(400, 900); // Very fast
+        state.world.entities.push({
+            id: `spark_${Math.random()}`,
+            type: 'particle',
+            position: { ...pos },
+            radius: randomRange(2, 4),
+            color: '#ffcc00', // Gold/Yellow sparks
+            velocity: { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed },
+            lifeTime: randomRange(0.3, 0.6),
+            shape: 'square', // Looks sharp
+            drag: 0.85, // Slows down quickly
+            gravity: true,
+            scaleDecay: true
+        });
+    }
+
+    // 4. SMOKE/FIRE: Slow expanding background
+    const smokeCount = 10;
+    for (let i = 0; i < smokeCount; i++) {
+        const angle = randomRange(0, Math.PI * 2);
+        const speed = randomRange(20, 100);
+        const isFire = Math.random() > 0.5;
+        state.world.entities.push({
+            id: `smoke_${Math.random()}`,
+            type: 'particle',
+            position: { ...pos },
+            radius: randomRange(20, 40),
+            color: isFire ? '#f97316' : '#444444', // Orange or Dark Grey
+            velocity: { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed },
+            lifeTime: randomRange(0.8, 1.5),
+            shape: 'smoke',
+            drag: 0.9,
+            gravity: false,
+            scaleDecay: true // Will actually look like fading if we rendered opacity, but shrinking works too
+        });
+    }
 };
