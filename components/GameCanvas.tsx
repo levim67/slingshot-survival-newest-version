@@ -57,21 +57,36 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ status, gameId, upgrades, autoB
     }
   }, []);
 
-  // Preload Images - Use URL-resolved paths for spikes
+  // Preload Images - Use fetch + createImageBitmap for reliable loading
   useEffect(() => {
-    // Manually map spike IDs to resolved URLs
     const spikeImages: Record<string, string> = {
       'spike_normal': greenSpikeImg,
       'spike_super': redSpikeImg
     };
 
-    Object.entries(spikeImages).forEach(([key, src]) => {
-      const img = new Image();
-      // No crossOrigin needed - same origin from public folder
-      img.onload = () => console.log(`[IMG] Loaded: ${key} from ${src}`);
-      img.onerror = (e) => console.error(`[IMG] FAILED: ${key} from ${src}`, e);
-      img.src = src;
-      imagesRef.current[key] = img;
+    Object.entries(spikeImages).forEach(async ([key, src]) => {
+      try {
+        // Method 1: Standard Image loading
+        const img = new Image();
+        img.onload = () => {
+          console.log(`[IMG] Loaded ${key}: ${img.naturalWidth}x${img.naturalHeight} from ${src}`);
+          imagesRef.current[key] = img;
+        };
+        img.onerror = (e) => console.error(`[IMG] FAILED: ${key}`, e);
+        img.src = src;
+
+        // Method 2: Also try fetch + createImageBitmap as backup
+        const response = await fetch(src);
+        if (response.ok) {
+          const blob = await response.blob();
+          const bitmap = await createImageBitmap(blob);
+          console.log(`[BITMAP] Created ${key}: ${bitmap.width}x${bitmap.height}`);
+          // Store bitmap - it can also be used with drawImage
+          (imagesRef.current as any)[key + '_bitmap'] = bitmap;
+        }
+      } catch (err) {
+        console.error(`[IMG] Error loading ${key}:`, err);
+      }
     });
   }, []);
 

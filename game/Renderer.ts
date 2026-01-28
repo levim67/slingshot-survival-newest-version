@@ -409,17 +409,23 @@ export const renderGame = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
                 // ===== SPIKES - REDESIGNED =====
                 // ===== SPIKES - REDESIGNED (IMAGE SUPPORT) =====
                 if (def.spikeStyle && def.spikeStyle !== 'none') {
+                    // Try bitmap first (more reliable), then Image
+                    const bitmap = images ? (images as any)[def.id + '_bitmap'] : null;
                     const img = (images && def.id && images[def.id]) ? images[def.id] : null;
+                    const drawable = bitmap || img;
 
                     // DEBUG: One-time log per spike type
                     if (!((window as any).__spikeDebug?.[def.id])) {
                         (window as any).__spikeDebug = (window as any).__spikeDebug || {};
                         (window as any).__spikeDebug[def.id] = true;
-                        console.log(`[SPIKE DEBUG] id=${def.id}, hasImages=${!!images}, img=${!!img}, complete=${img?.complete}, width=${img?.naturalWidth}`);
+                        console.log(`[SPIKE DEBUG] id=${def.id}, hasBitmap=${!!bitmap}, hasImg=${!!img}, imgComplete=${img?.complete}, imgWidth=${img?.naturalWidth}`);
                     }
 
-                    // Ensure image is loaded AND valid (width > 0)
-                    if (img && img.complete && img.naturalWidth > 0) {
+                    // Check if we have a valid drawable (bitmap or completed image)
+                    const isValidImage = img && img.complete && img.naturalWidth > 0;
+                    const isValidBitmap = bitmap && bitmap.width > 0;
+
+                    if (isValidBitmap || isValidImage) {
                         // --- IMAGE RENDERING ---
                         ctx.save();
 
@@ -440,7 +446,8 @@ export const renderGame = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
                         if (!((window as any).__drawDebug?.[e.id])) {
                             (window as any).__drawDebug = (window as any).__drawDebug || {};
                             (window as any).__drawDebug[e.id] = true;
-                            console.log(`[DRAW DEBUG] Drawing image for ${def.id} at size=${size.toFixed(0)}, pos=(${e.position.x.toFixed(0)}, ${e.position.y.toFixed(0)})`);
+                            const drawType = isValidBitmap ? 'BITMAP' : 'IMAGE';
+                            console.log(`[DRAW DEBUG] Drawing ${drawType} for ${def.id} at size=${size.toFixed(0)}, pos=(${e.position.x.toFixed(0)}, ${e.position.y.toFixed(0)})`);
                         }
 
                         // VISUAL DEBUG: Draw bright magenta border to verify position
@@ -448,8 +455,11 @@ export const renderGame = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
                         ctx.lineWidth = 3;
                         ctx.strokeRect(-size / 2, -size / 2, size, size);
 
-                        // Draw actual image
-                        ctx.drawImage(img, -size / 2, -size / 2, size, size);
+                        // Use bitmap if available, otherwise image
+                        const drawSource = isValidBitmap ? bitmap : img;
+
+                        // Draw actual image/bitmap
+                        ctx.drawImage(drawSource, -size / 2, -size / 2, size, size);
 
                         ctx.restore();
 
