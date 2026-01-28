@@ -509,13 +509,15 @@ export const renderGame = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
                         ctx.save();
                         ctx.globalCompositeOperation = 'screen'; // Make it pop
                         ctx.shadowColor = def.glowColor || '#ffffff';
-                        ctx.shadowBlur = 40; // Soft wide glow
+                        // Scale blur with radius so small spikes don't have massive halos
+                        ctx.shadowBlur = e.radius * 1.5;
                         ctx.fillStyle = def.glowColor || '#ffffff';
                         ctx.beginPath();
-                        ctx.arc(0, 0, e.radius * 0.8, 0, Math.PI * 2);
+                        // Reduced backing circle size to hide it better behind the asset
+                        ctx.arc(0, 0, e.radius * 0.6, 0, Math.PI * 2);
                         ctx.fill();
                         // Double glow for core intensity
-                        ctx.shadowBlur = 15;
+                        ctx.shadowBlur = e.radius * 0.5;
                         ctx.fill();
                         ctx.restore();
 
