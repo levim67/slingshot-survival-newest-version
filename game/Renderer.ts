@@ -411,6 +411,13 @@ export const renderGame = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
                 if (def.spikeStyle && def.spikeStyle !== 'none') {
                     const img = (images && def.id && images[def.id]) ? images[def.id] : null;
 
+                    // DEBUG: One-time log per spike type
+                    if (!((window as any).__spikeDebug?.[def.id])) {
+                        (window as any).__spikeDebug = (window as any).__spikeDebug || {};
+                        (window as any).__spikeDebug[def.id] = true;
+                        console.log(`[SPIKE DEBUG] id=${def.id}, hasImages=${!!images}, img=${!!img}, complete=${img?.complete}, width=${img?.naturalWidth}`);
+                    }
+
                     // Ensure image is loaded AND valid (width > 0)
                     if (img && img.complete && img.naturalWidth > 0) {
                         // --- IMAGE RENDERING ---
