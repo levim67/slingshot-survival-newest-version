@@ -443,6 +443,12 @@ export const renderGame = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
                             console.log(`[DRAW DEBUG] Drawing image for ${def.id} at size=${size.toFixed(0)}, pos=(${e.position.x.toFixed(0)}, ${e.position.y.toFixed(0)})`);
                         }
 
+                        // VISUAL DEBUG: Draw bright magenta border to verify position
+                        ctx.strokeStyle = '#ff00ff';
+                        ctx.lineWidth = 3;
+                        ctx.strokeRect(-size / 2, -size / 2, size, size);
+
+                        // Draw actual image
                         ctx.drawImage(img, -size / 2, -size / 2, size, size);
 
                         ctx.restore();

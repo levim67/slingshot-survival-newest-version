@@ -67,7 +67,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ status, gameId, upgrades, autoB
 
     Object.entries(spikeImages).forEach(([key, src]) => {
       const img = new Image();
-      img.crossOrigin = 'anonymous'; // Required for cross-origin images to render on canvas!
+      // No crossOrigin needed - same origin from public folder
       img.onload = () => console.log(`[IMG] Loaded: ${key} from ${src}`);
       img.onerror = (e) => console.error(`[IMG] FAILED: ${key} from ${src}`, e);
       img.src = src;
