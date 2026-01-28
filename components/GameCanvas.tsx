@@ -9,6 +9,9 @@ import { BOSS_SPAWN_INTERVAL, BALL_DEFINITIONS } from '../utils/constants';
 // Spike images from public folder - use BASE_URL for correct path in production
 const greenSpikeImg = `${import.meta.env.BASE_URL}green_spike.png`;
 const redSpikeImg = `${import.meta.env.BASE_URL}red_spike.png`;
+const redChunk1Img = `${import.meta.env.BASE_URL}assets/red_chunk_1.png`;
+const redChunk2Img = `${import.meta.env.BASE_URL}assets/red_chunk_2.png`;
+const redChunk3Img = `${import.meta.env.BASE_URL}assets/red_chunk_3.png`;
 
 interface GameCanvasProps {
   status: GameStateStatus;
@@ -61,7 +64,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ status, gameId, upgrades, autoB
   useEffect(() => {
     const spikeImages: Record<string, string> = {
       'spike_normal': greenSpikeImg,
-      'spike_super': redSpikeImg
+      'spike_super': redSpikeImg,
+      'red_chunk_1': redChunk1Img,
+      'red_chunk_2': redChunk2Img,
+      'red_chunk_3': redChunk3Img
     };
 
     Object.entries(spikeImages).forEach(async ([key, src]) => {

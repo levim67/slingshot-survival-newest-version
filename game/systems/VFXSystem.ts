@@ -10,7 +10,7 @@ const MAX_ACTIVE_DEBRIS = 300;
 const MAX_DEBRIS_PER_EXPLOSION = 12;
 
 const getActiveDebrisCount = (state: GameState): number => {
-    return state.world.entities.filter(e => e.type === 'particle' && e.isDebris).length;
+    return state.world.entities.filter(e => (e.type === 'particle' && e.isDebris) || e.type === 'debris').length;
 };
 
 /**
@@ -37,7 +37,11 @@ const getDistanceLOD = (state: GameState, pos: Vector2): number => {
  */
 export const spawnExplosion = (state: GameState, pos: Vector2, c1: string, c2: string, vel: Vector2) => {
     const currentDebris = getActiveDebrisCount(state);
-    if (currentDebris > MAX_ACTIVE_DEBRIS) return; // Hard cap
+    if (currentDebris > MAX_ACTIVE_DEBRIS) {
+        // Fallback to simple burst if limit reached
+        spawnDirectionalBurst(state, pos, { x: 0, y: -1 }, 5, 200);
+        return;
+    }
 
     const lod = getDistanceLOD(state, pos);
 
@@ -286,4 +290,46 @@ export const triggerChainLightning = (
             rem--;
         } else break;
     }
+};
+
+/**
+ * Spawns a high-fidelity image-based debris explosion
+ */
+export const spawnDebrisExplosion = (
+    state: GameState,
+    pos: Vector2,
+    baseColor: string,
+    chunkImages: string[],
+    count: number = 15
+) => {
+    // Check limits
+    if (getActiveDebrisCount(state) > MAX_ACTIVE_DEBRIS) {
+        spawnExplosion(state, pos, baseColor, baseColor, { x: 0, y: 0 });
+        return;
+    }
+
+    for (let i = 0; i < count; i++) {
+        const angle = randomRange(0, Math.PI * 2);
+        const speed = randomRange(200, 700);
+        const img = chunkImages[Math.floor(randomRange(0, chunkImages.length))];
+
+        state.world.entities.push({
+            id: `debris_img_${Math.random()}`,
+            type: 'debris',
+            position: { ...pos },
+            velocity: { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed },
+            radius: randomRange(20, 40), // Size of chunk
+            rotation: randomRange(0, Math.PI * 2),
+            angularVelocity: randomRange(-10, 10),
+            lifeTime: randomRange(0.8, 1.5),
+            gravity: true,
+            drag: 0.95,
+            imageSrc: img,
+            color: baseColor, // Fallback/Tint
+            scaleDecay: true
+        });
+    }
+
+    // Add some standard particles for dust/filler
+    spawnExplosion(state, pos, baseColor, baseColor, { x: 0, y: 0 });
 };

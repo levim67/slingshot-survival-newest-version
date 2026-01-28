@@ -642,6 +642,32 @@ export const renderGame = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
             }
         }
         // Wall rendering moved earlier in file (laser beams)
+        // DEBRIS CHUNKS (IMAGE BASED)
+        else if (e.type === 'debris') {
+            const imgName = e.imageSrc;
+            // Try bitmap first, then Image
+            const bitmap = imgName ? (images as any)[imgName + '_bitmap'] : null;
+            const img = imgName && images[imgName] ? images[imgName] : null;
+
+            if (bitmap || img) {
+                ctx.save();
+                ctx.translate(e.position.x, e.position.y);
+                ctx.rotate(e.rotation || 0);
+
+                // Scale image larger than physics radius for visual impact
+                const size = e.radius * 2.5;
+                const source = bitmap || img;
+
+                ctx.drawImage(source, -size / 2, -size / 2, size, size);
+                ctx.restore();
+            } else {
+                // Fallback if image missing
+                ctx.fillStyle = e.color;
+                ctx.beginPath();
+                ctx.arc(e.position.x, e.position.y, e.radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
         else if (e.type === 'particle' || e.type === 'shockwave' || e.type === 'lightning' || e.type === 'shockwave_ring' || e.type === 'stormfire_chain') {
             // OPTIMIZATION: NO SHADOW BLUR FOR PARTICLES
             ctx.globalCompositeOperation = 'lighter';

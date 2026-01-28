@@ -57,12 +57,13 @@ export type BossType = 'CUBE_OVERLORD' | 'WORM_DEVOURER' | 'TRIANGLE_ARCHITECT';
 
 export interface Entity {
   id: string;
-  type: 'player' | 'ball' | 'missile' | 'fireball' | 'acid_spit' | 'friendly_missile' | 'friendly_fireball' | 'bomb' | 'particle' | 'shockwave' | 'floating_text' | 'wall' | 'boss' | 'lightning' | 'super_missile' | 'mini_super_missile' | 'shockwave_ring' | 'stormfire_lance' | 'stormfire_chain';
+  type: 'player' | 'ball' | 'missile' | 'fireball' | 'acid_spit' | 'friendly_missile' | 'friendly_fireball' | 'bomb' | 'particle' | 'shockwave' | 'floating_text' | 'wall' | 'boss' | 'lightning' | 'super_missile' | 'mini_super_missile' | 'shockwave_ring' | 'stormfire_lance' | 'stormfire_chain' | 'debris';
   position: Vector2;
   radius: number;
   width?: number;
   height?: number;
   color: string;
+  imageSrc?: string; // For debris or specific textures
   velocity?: Vector2;
   mass?: number;
   lifeTime?: number;

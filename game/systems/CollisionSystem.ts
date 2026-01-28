@@ -4,7 +4,7 @@ import { add, sub, mult, mag, normalize, dist, checkCollision, checkCircleRect, 
 import { GRAVITY, LAVA_LEVEL, BALL_DEFINITIONS } from '../../utils/constants';
 import * as audio from '../../utils/audio';
 import { spawnFloatingText, addShake, findBestTarget } from '../spawners/EffectSpawner';
-import { spawnExplosion, spawnDirectionalBurst, generateLightningPoints, triggerChainLightning } from './VFXSystem';
+import { spawnExplosion, spawnDirectionalBurst, generateLightningPoints, triggerChainLightning, spawnDebrisExplosion } from './VFXSystem';
 import { spawnFriendlyMissile } from '../spawners/ProjectileSpawner';
 import { killBoss } from '../spawners/BossSpawner';
 import { handleWormSegmentDeath } from './BossSystem';
@@ -162,7 +162,11 @@ export const destroyBall = (
     const def = entity.ballDef;
     if (!def) return;
 
-    spawnExplosion(state, entity.position, def.coreColor, def.glowColor, state.player.velocity);
+    if (def.id === 'red_common') {
+        spawnDebrisExplosion(state, entity.position, def.coreColor, ['red_chunk_1', 'red_chunk_2', 'red_chunk_3']);
+    } else {
+        spawnExplosion(state, entity.position, def.coreColor, def.glowColor, state.player.velocity);
+    }
     if (def.points > 0) {
         spawnFloatingText(state, entity.position, `+${def.points * state.combo.multiplier}`, '#ffff00');
         state.score += def.points * state.combo.multiplier;
