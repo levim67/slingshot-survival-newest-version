@@ -95,29 +95,93 @@ export const updateGame = (state: GameState, dt: number, upgrades: Upgrades, cal
     state.player.position = add(state.player.position, mult(state.player.velocity, gameDt));
     state.player.velocity = mult(state.player.velocity, Math.pow(0.995, gameDt * 60));
 
-    // --- VFX: PLAYER TRAIL ---
+    // --- VFX: ENHANCED PLAYER TRAIL ---
     const speed = mag(state.player.velocity);
-    if (speed > 300 && state.utility.autoBounceState !== 'ACTIVE' && state.world.entities.length < 1200) {
+    if (speed > 200 && state.utility.autoBounceState !== 'ACTIVE' && state.world.entities.length < 1200) {
         const density = Math.min(1.0, speed / 2000);
-        // OPTIMIZATION: Reduced spawn rate (was 0.6 + 0.4)
-        if (Math.random() < 0.2 + density * 0.3) {
-            const angle = Math.atan2(state.player.velocity.y, state.player.velocity.x) + Math.PI;
-            const spread = 0.4;
-            const isSmoke = Math.random() < 0.3;
+        const angle = Math.atan2(state.player.velocity.y, state.player.velocity.x) + Math.PI;
+
+        // === LAYER 1: Core Energy Particles (Bright, Fast-fading) ===
+        if (Math.random() < 0.4 + density * 0.5) {
+            const spread = 0.3;
+            // Color shifts from cyan to white based on speed
+            const speedHue = Math.min(200, 180 + speed / 20); // Cyan to blue-white shift
+            const coreColors = [`hsl(${speedHue}, 100%, 80%)`, `hsl(${speedHue}, 100%, 90%)`, '#ffffff'];
 
             state.world.entities.push({
-                id: `trail_${Math.random()}`,
+                id: `trail_core_${Math.random()}`,
                 type: 'particle',
-                position: sub(state.player.position, mult(normalize(state.player.velocity), 10)),
+                position: sub(state.player.position, mult(normalize(state.player.velocity), 15)),
                 velocity: {
-                    x: Math.cos(angle + randomRange(-spread, spread)) * randomRange(50, 150),
-                    y: Math.sin(angle + randomRange(-spread, spread)) * randomRange(50, 150)
+                    x: Math.cos(angle + randomRange(-spread, spread)) * randomRange(80, 200),
+                    y: Math.sin(angle + randomRange(-spread, spread)) * randomRange(80, 200)
                 },
-                color: isSmoke ? 'rgba(255,255,255,0.2)' : 'rgba(100, 200, 255, 0.6)',
-                radius: isSmoke ? randomRange(10, 20) : randomRange(4, 8),
-                lifeTime: isSmoke ? randomRange(0.3, 0.5) : randomRange(0.1, 0.3),
+                color: coreColors[Math.floor(Math.random() * coreColors.length)],
+                radius: randomRange(3, 6),
+                lifeTime: randomRange(0.15, 0.3),
                 scaleDecay: true,
-                shape: isSmoke ? 'smoke' : 'circle'
+                isSpark: true
+            });
+        }
+
+        // === LAYER 2: Glowing Plasma Wisps (Medium-sized, ethereal) ===
+        if (Math.random() < 0.25 + density * 0.25) {
+            const spread = 0.6;
+            // Cool purple/blue/cyan gradient
+            const wispColors = ['rgba(139, 92, 246, 0.6)', 'rgba(59, 130, 246, 0.5)', 'rgba(34, 211, 238, 0.5)'];
+
+            state.world.entities.push({
+                id: `trail_wisp_${Math.random()}`,
+                type: 'particle',
+                position: sub(state.player.position, mult(normalize(state.player.velocity), randomRange(5, 20))),
+                velocity: {
+                    x: Math.cos(angle + randomRange(-spread, spread)) * randomRange(30, 100),
+                    y: Math.sin(angle + randomRange(-spread, spread)) * randomRange(30, 100) - 20 // Slightly float up
+                },
+                color: wispColors[Math.floor(Math.random() * wispColors.length)],
+                radius: randomRange(8, 15),
+                lifeTime: randomRange(0.3, 0.5),
+                scaleDecay: true,
+                shape: 'smoke'
+            });
+        }
+
+        // === LAYER 3: Sparkle Dust (Tiny, scattered, long-lasting) ===
+        if (Math.random() < 0.3 + density * 0.4) {
+            const sparkleAngle = randomRange(0, Math.PI * 2);
+            const sparkleOffset = randomRange(5, 25);
+
+            state.world.entities.push({
+                id: `trail_sparkle_${Math.random()}`,
+                type: 'particle',
+                position: {
+                    x: state.player.position.x + Math.cos(sparkleAngle) * sparkleOffset,
+                    y: state.player.position.y + Math.sin(sparkleAngle) * sparkleOffset
+                },
+                velocity: {
+                    x: randomRange(-30, 30),
+                    y: randomRange(-30, 30) - 15 // Float up slowly
+                },
+                color: speed > 800 ? '#fef08a' : '#67e8f9', // Yellow when fast, cyan when slower
+                radius: randomRange(1.5, 3),
+                lifeTime: randomRange(0.4, 0.8),
+                scaleDecay: true,
+                isSpark: true
+            });
+        }
+
+        // === LAYER 4: Speed Lines (At very high speed only) ===
+        if (speed > 1200 && Math.random() < 0.15) {
+            state.world.entities.push({
+                id: `trail_streak_${Math.random()}`,
+                type: 'particle',
+                position: sub(state.player.position, mult(normalize(state.player.velocity), 25)),
+                velocity: mult(state.player.velocity, -0.3),
+                color: 'rgba(255, 255, 255, 0.8)',
+                radius: randomRange(2, 4),
+                lifeTime: randomRange(0.08, 0.15),
+                scaleDecay: true,
+                shape: 'wedge'
             });
         }
     }

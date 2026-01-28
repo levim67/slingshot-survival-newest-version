@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from 'react';
 import { GameStateStatus, Upgrades, GameState, Vector2 } from '../types';
 import { mag, normalize, sub, mult } from '../utils/physics';
@@ -7,9 +6,9 @@ import { updateGame, createLavaParticle, spawnDirectionalBurst, initializeWorld 
 import { renderGame } from '../game/Renderer';
 import { BOSS_SPAWN_INTERVAL, BALL_DEFINITIONS } from '../utils/constants';
 
-// Spike image URLs (using raw GitHub like LoadingScreen - this works!)
-const greenSpikeImg = 'https://raw.githubusercontent.com/levim67/slingshot-survival-assets/main/green%20spike.png';
-const redSpikeImg = 'https://raw.githubusercontent.com/levim67/slingshot-survival-assets/main/red%20spike.png';
+// Spike images - using Vite import for proper bundling (no CORS issues)
+import greenSpikeImg from '../green spike.png';
+import redSpikeImg from '../red spike.png';
 
 interface GameCanvasProps {
   status: GameStateStatus;

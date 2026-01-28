@@ -52,7 +52,7 @@ const App: React.FC = () => {
 
   const [cameraZoom, setCameraZoom] = useState<number>(() => {
     const saved = localStorage.getItem('slingshot_zoom');
-    return saved ? parseFloat(saved) : 0.6;
+    return saved ? parseFloat(saved) : 0.85; // More zoomed out default for better visibility
   });
 
   // Calculate actual physics upgrades based on levels
