@@ -65,7 +65,7 @@ export const BALL_DEFINITIONS: Record<BallTypeId, BallDefinition> = {
   // C) HAZARDS
   'spike_normal': {
     id: 'spike_normal', displayName: 'Spike', rarityTag: 'COMMON',
-    radius: 42, mass: 2, bounciness: 0.4,
+    radius: 48, mass: 2, bounciness: 0.4,
     coreColor: '#22c55e', glowColor: '#4ade80', glowRadius: 60, spikeStyle: 'normal',
     points: 400, isHazard: true, lethalOnTouch: true,
     specialEffect: 'NONE',
@@ -74,7 +74,7 @@ export const BALL_DEFINITIONS: Record<BallTypeId, BallDefinition> = {
   },
   'spike_super': {
     id: 'spike_super', displayName: 'Super Spike', rarityTag: 'RARE',
-    radius: 48, mass: 3, bounciness: 0.2,
+    radius: 54, mass: 3, bounciness: 0.2,
     coreColor: '#ef4444', glowColor: '#f87171', glowRadius: 75, spikeStyle: 'super',
     points: 1200, isHazard: true, lethalOnTouch: true,
     specialEffect: 'NONE',
