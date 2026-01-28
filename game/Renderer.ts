@@ -414,14 +414,6 @@ export const renderGame = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
                     // Try bitmap first (more reliable), then Image
                     const bitmap = images ? (images as any)[def.id + '_bitmap'] : null;
                     const img = (images && def.id && images[def.id]) ? images[def.id] : null;
-                    const drawable = bitmap || img;
-
-                    // DEBUG: One-time log per spike type
-                    if (!((window as any).__spikeDebug?.[def.id])) {
-                        (window as any).__spikeDebug = (window as any).__spikeDebug || {};
-                        (window as any).__spikeDebug[def.id] = true;
-                        console.log(`[SPIKE DEBUG] id=${def.id}, hasBitmap=${!!bitmap}, hasImg=${!!img}, imgComplete=${img?.complete}, imgWidth=${img?.naturalWidth}`);
-                    }
 
                     // Check if we have a valid drawable (bitmap or completed image)
                     const isValidImage = img && img.complete && img.naturalWidth > 0;
@@ -435,22 +427,11 @@ export const renderGame = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
                         const rotSpeed = def.spikeStyle === 'super' ? 0.8 : 0.4;
                         ctx.rotate(state.visuals.time * rotSpeed);
 
-                        // Removed Pulse to avoid "distortion"
-                        // Glow
-                        ctx.shadowColor = def.glowColor;
-                        ctx.shadowBlur = def.glowRadius || 20;
+                        // No shadow/glow - it can cause visible edges on transparent images
+                        ctx.shadowBlur = 0;
 
-                        // Draw Image centered
-                        // Adjust size multiplier to fit hitbox (radius) visually
-                        const size = e.radius * 2.2;
-
-                        // DEBUG: Confirm we actually reach drawImage
-                        if (!((window as any).__drawDebug?.[e.id])) {
-                            (window as any).__drawDebug = (window as any).__drawDebug || {};
-                            (window as any).__drawDebug[e.id] = true;
-                            const drawType = isValidBitmap ? 'BITMAP' : 'IMAGE';
-                            console.log(`[DRAW DEBUG] Drawing ${drawType} for ${def.id} at size=${size.toFixed(0)}, pos=(${e.position.x.toFixed(0)}, ${e.position.y.toFixed(0)})`);
-                        }
+                        // Draw Image centered - larger size for better visibility
+                        const size = e.radius * 3.5;
 
                         // Use bitmap if available, otherwise image
                         const drawSource = isValidBitmap ? bitmap : img;

@@ -68,24 +68,19 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ status, gameId, upgrades, autoB
       try {
         // Method 1: Standard Image loading
         const img = new Image();
-        img.onload = () => {
-          console.log(`[IMG] Loaded ${key}: ${img.naturalWidth}x${img.naturalHeight} from ${src}`);
-          imagesRef.current[key] = img;
-        };
-        img.onerror = (e) => console.error(`[IMG] FAILED: ${key}`, e);
+        img.onload = () => { imagesRef.current[key] = img; };
+        img.onerror = () => { }; // Silent fail, bitmap backup will work
         img.src = src;
 
-        // Method 2: Also try fetch + createImageBitmap as backup
+        // Method 2: Also try fetch + createImageBitmap as backup (more reliable)
         const response = await fetch(src);
         if (response.ok) {
           const blob = await response.blob();
           const bitmap = await createImageBitmap(blob);
-          console.log(`[BITMAP] Created ${key}: ${bitmap.width}x${bitmap.height}`);
-          // Store bitmap - it can also be used with drawImage
           (imagesRef.current as any)[key + '_bitmap'] = bitmap;
         }
       } catch (err) {
-        console.error(`[IMG] Error loading ${key}:`, err);
+        // Silent fail
       }
     });
   }, []);
