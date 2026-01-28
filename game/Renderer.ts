@@ -435,6 +435,14 @@ export const renderGame = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
                         // Draw Image centered
                         // Adjust size multiplier to fit hitbox (radius) visually
                         const size = e.radius * 2.2;
+
+                        // DEBUG: Confirm we actually reach drawImage
+                        if (!((window as any).__drawDebug?.[e.id])) {
+                            (window as any).__drawDebug = (window as any).__drawDebug || {};
+                            (window as any).__drawDebug[e.id] = true;
+                            console.log(`[DRAW DEBUG] Drawing image for ${def.id} at size=${size.toFixed(0)}, pos=(${e.position.x.toFixed(0)}, ${e.position.y.toFixed(0)})`);
+                        }
+
                         ctx.drawImage(img, -size / 2, -size / 2, size, size);
 
                         ctx.restore();
