@@ -513,8 +513,8 @@ export const renderGame = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
                         ctx.shadowBlur = e.radius * 1.5;
                         ctx.fillStyle = def.glowColor || '#ffffff';
                         ctx.beginPath();
-                        // Reduced backing circle size to hide it better behind the asset
-                        ctx.arc(0, 0, e.radius * 0.6, 0, Math.PI * 2);
+                        // FURTHER REDUCED backing circle size to 0.45 to ensure it's hidden by the core
+                        ctx.arc(0, 0, e.radius * 0.45, 0, Math.PI * 2);
                         ctx.fill();
                         // Double glow for core intensity
                         ctx.shadowBlur = e.radius * 0.5;
