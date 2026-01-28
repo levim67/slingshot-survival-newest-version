@@ -8,6 +8,7 @@ import { spawnExplosion, spawnDirectionalBurst, generateLightningPoints, trigger
 import { spawnFriendlyMissile } from '../spawners/ProjectileSpawner';
 import { killBoss } from '../spawners/BossSpawner';
 import { handleWormSegmentDeath } from './BossSystem';
+import { checkStormfireOnHitProc } from './StormfireSystem';
 
 /**
  * Handles platform collisions with the player
@@ -173,10 +174,18 @@ export const destroyBall = (
             const angle = Math.random() * Math.PI * 2;
             state.player.velocity = mult({ x: Math.cos(angle), y: Math.sin(angle) }, 1500);
         }
-        if (upgrades.chainLightningChance > 0 && Math.random() < upgrades.chainLightningChance) {
+
+        // Chain Lightning - DISABLED if Stormfire is purchased
+        if (upgrades.chainLightningChance > 0 && !upgrades.unlockParagonStormfire && Math.random() < upgrades.chainLightningChance) {
             triggerChainLightning(state, entity.position, upgrades.chainLightningCount, entitiesToRemove,
                 (s, e, etr, c) => destroyBall(s, e, upgrades, etr, c));
         }
+
+        // PARAGON: Stormfire on-hit proc (replaces Chain Lightning)
+        if (upgrades.unlockParagonStormfire) {
+            checkStormfireOnHitProc(state, upgrades, entity.position);
+        }
+
         if (upgrades.bounceMissileChance > 0 && Math.random() < upgrades.bounceMissileChance) {
             spawnFriendlyMissile(state, entity.position, upgrades);
         }

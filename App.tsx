@@ -78,6 +78,7 @@ const App: React.FC = () => {
       unlockGreenSpikeBreaker: false,
       unlockRedSpikeBreaker: false,
       unlockParagonSuperMissile: false,
+      unlockParagonStormfire: false,
       chainLightningChance: 0,
       chainLightningCount: 0
     };

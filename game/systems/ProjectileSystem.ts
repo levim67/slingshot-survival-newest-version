@@ -140,6 +140,13 @@ export const updateFriendlyProjectiles = (
         return true;
     }
 
+    // STORMFIRE LANCE LOGIC
+    if (entity.type === 'stormfire_lance') {
+        // Handled by StormfireSystem.updateStormfireLance
+        // This is called from Engine.ts, not here
+        return true;
+    }
+
     return false;
 };
 

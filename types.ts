@@ -57,7 +57,7 @@ export type BossType = 'CUBE_OVERLORD' | 'WORM_DEVOURER' | 'TRIANGLE_ARCHITECT';
 
 export interface Entity {
   id: string;
-  type: 'player' | 'ball' | 'missile' | 'fireball' | 'acid_spit' | 'friendly_missile' | 'friendly_fireball' | 'bomb' | 'particle' | 'shockwave' | 'floating_text' | 'wall' | 'boss' | 'lightning' | 'super_missile' | 'mini_super_missile' | 'shockwave_ring';
+  type: 'player' | 'ball' | 'missile' | 'fireball' | 'acid_spit' | 'friendly_missile' | 'friendly_fireball' | 'bomb' | 'particle' | 'shockwave' | 'floating_text' | 'wall' | 'boss' | 'lightning' | 'super_missile' | 'mini_super_missile' | 'shockwave_ring' | 'stormfire_lance' | 'stormfire_chain';
   position: Vector2;
   radius: number;
   width?: number;
@@ -182,6 +182,8 @@ export interface GameState {
     fireballTimer: number;
     bombTimer: number;
     lastHudUpdate: { unlocked: boolean, charge: number, active: boolean, time: number, bossHp: number };
+    stormfireTimer: number;
+    stormfireIcdTimer: number;
   };
   score: number;
   distanceRecord: number;
@@ -217,6 +219,7 @@ export interface Upgrades {
   unlockGreenSpikeBreaker: boolean;
   unlockRedSpikeBreaker: boolean;
   unlockParagonSuperMissile: boolean;
+  unlockParagonStormfire: boolean;
 }
 
 export interface UpgradeItemDef {
@@ -251,7 +254,8 @@ export const UPGRADE_ITEMS: UpgradeItemDef[] = [
   { id: 'auto_bounce', name: 'Auto-Bounce', description: 'Charges by breaking targets', category: 'UTILITY', stat: 'autoBounceDuration', baseValue: 2.0, increment: 0.5, secondaryStat: 'autoBounceChargePerHit', secondaryBase: 0.04, secondaryIncrement: 0.01, maxLevel: 9, costs: TIER_COSTS, iconType: 'auto_bounce' },
   { id: 'green_spike_breaker', name: 'Green Spike Breaker', description: 'Permanently allow smashing Green Spikes', category: 'PERMANENT', stat: 'unlockGreenSpikeBreaker', baseValue: 0, increment: 1, maxLevel: 1, costs: [5000], iconType: 'spike' },
   { id: 'red_spike_breaker', name: 'Red Spike Breaker', description: 'Permanently allow smashing Red Spikes', category: 'PERMANENT', stat: 'unlockRedSpikeBreaker', baseValue: 0, increment: 1, maxLevel: 1, costs: [25000], iconType: 'spike' },
-  { id: 'paragon_super_missile', name: 'Super Missile', description: 'Replaces all missiles with Ultimate Seeking Missiles that split on impact.', category: 'PARAGON', stat: 'unlockParagonSuperMissile', baseValue: 0, increment: 1, maxLevel: 1, costs: [1250000], iconType: 'paragon' }
+  { id: 'paragon_super_missile', name: 'Super Missile', description: 'Replaces all missiles with Ultimate Seeking Missiles that split on impact.', category: 'PARAGON', stat: 'unlockParagonSuperMissile', baseValue: 0, increment: 1, maxLevel: 1, costs: [1250000], iconType: 'paragon' },
+  { id: 'paragon_stormfire', name: 'PARAGON: Stormfire', description: 'Replaces Auto Fireball & Chain Lightning with devastating Stormfire Lances that chain to nearby enemies.', category: 'PARAGON', stat: 'unlockParagonStormfire', baseValue: 0, increment: 1, maxLevel: 1, costs: [1250000], iconType: 'paragon' }
 ];
 
 export const SKIN_ITEMS = [

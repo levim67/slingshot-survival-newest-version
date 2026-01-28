@@ -5,6 +5,7 @@ import * as audio from '../../utils/audio';
 import { findBestTarget, findBombTarget, spawnFloatingText } from '../spawners/EffectSpawner';
 import { spawnFriendlyMissile, spawnFriendlyBomb, spawnFriendlyFireball } from '../spawners/ProjectileSpawner';
 import { killBoss } from '../spawners/BossSpawner';
+import { updateStormfirePassive } from './StormfireSystem';
 
 /**
  * Updates the auto-bounce ability state machine
@@ -102,8 +103,8 @@ export const updatePassiveAbilities = (state: GameState, gameDt: number, upgrade
         }
     }
 
-    // Auto Fireball
-    if (upgrades.fireballChance > 0) {
+    // Auto Fireball - DISABLED if Stormfire is purchased
+    if (upgrades.fireballChance > 0 && !upgrades.unlockParagonStormfire) {
         state.utility.fireballTimer += gameDt;
         const interval = 1.0 / Math.max(0.1, upgrades.fireballChance);
         if (state.utility.fireballTimer > interval) {
@@ -111,6 +112,9 @@ export const updatePassiveAbilities = (state: GameState, gameDt: number, upgrade
             spawnFriendlyFireball(state);
         }
     }
+
+    // PARAGON: Stormfire passive proc (replaces Auto Fireball + adds passive spawning)
+    updateStormfirePassive(state, gameDt, upgrades);
 };
 
 /**

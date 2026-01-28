@@ -14,18 +14,11 @@ import { GRAVITY, LAVA_LEVEL, CONST_DECAY_RATE, BOSS_SPAWN_INTERVAL } from '../u
 // Systems
 import { updateAutoBounce, updateCombo, updatePassiveAbilities, updateHUD } from './systems/AbilitySystem';
 import { updateCubeBossAI, updateWormAI, handleWormSegmentDeath, updateTriangleBossAI } from './systems/BossSystem';
-import {
-    handlePlatformCollisions,
-    handleBossCollision,
-    handleBallCollision,
-    handleBlackHoleEffect,
-    updateEnemyBehaviors,
-    destroyBall,
-    handleWallCollision
-} from './systems/CollisionSystem';
+import { handlePlatformCollisions, handleBossCollision, handleBallCollision, handleBlackHoleEffect, updateEnemyBehaviors, destroyBall, handleWallCollision } from './systems/CollisionSystem';
 import { updateFriendlyProjectiles, updateEnemyProjectiles, updateBomb } from './systems/ProjectileSystem';
 import { updateGenericEntities, updateLavaParticles, explodeBomb } from './systems/EntitySystem';
 import { spawnDirectionalBurst } from './systems/VFXSystem';
+import { updateStormfireLance } from './systems/StormfireSystem';
 
 // Spawners
 import { initializeWorld, updateWorldGeneration, createLavaParticle, spawnChunkEntities } from './spawners/EntitySpawner';
@@ -269,6 +262,12 @@ const handleEntityUpdates = (state: GameState, realDt: number, gameDt: number, u
     for (const entity of activeEntities) {
         // Super missiles and friendly projectiles
         if (updateFriendlyProjectiles(state, entity, gameDt, activeEntities, entitiesToRemove, upgrades, destroyBall)) continue;
+
+        // Stormfire Lances (PARAGON)
+        if (entity.type === 'stormfire_lance') {
+            updateStormfireLance(entity, state, gameDt, upgrades, entitiesToRemove);
+            continue;
+        }
 
         // Bombs
         if (updateBomb(state, entity, gameDt, activeEntities, entitiesToRemove, explodeBomb, upgrades)) continue;

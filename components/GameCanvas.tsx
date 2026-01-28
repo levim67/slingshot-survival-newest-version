@@ -40,7 +40,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ status, gameId, upgrades, autoB
     time: { scale: 1.0, lastFrame: 0, aliveDuration: 0 },
     boss: { nextSpawnTime: BOSS_SPAWN_INTERVAL, active: false, lastHealth: 0, maxHealth: 1, cycleCount: 0 },
     visuals: { aimLerp: 0, time: 0 },
-    utility: { autoBounceState: 'OFF', activeTimer: 0, charge: 0, targetSearchTimer: 0, currentTargetId: null, missileTimer: 0, fireballTimer: 0, bombTimer: 0, lastHudUpdate: { unlocked: false, charge: -1, active: false, time: -1, bossHp: -1 } },
+    utility: { autoBounceState: 'OFF', activeTimer: 0, charge: 0, targetSearchTimer: 0, currentTargetId: null, missileTimer: 0, fireballTimer: 0, bombTimer: 0, lastHudUpdate: { unlocked: false, charge: -1, active: false, time: -1, bossHp: -1 }, stormfireTimer: 0, stormfireIcdTimer: 0 },
     score: 0, distanceRecord: 0,
   });
 
@@ -105,7 +105,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ status, gameId, upgrades, autoB
       state.boss = { nextSpawnTime: BOSS_SPAWN_INTERVAL, active: false, lastHealth: 0, maxHealth: 1, cycleCount: 0 };
       state.camera.zoom = baseZoom;
       state.camera.position = { x: 0, y: 400 };
-      state.utility = { autoBounceState: 'OFF', activeTimer: 0, charge: 0, targetSearchTimer: 0, currentTargetId: null, missileTimer: 0, fireballTimer: 0, bombTimer: 0, lastHudUpdate: { unlocked: false, charge: -1, active: false, time: -1, bossHp: -1 } };
+      state.utility = { autoBounceState: 'OFF', activeTimer: 0, charge: 0, targetSearchTimer: 0, currentTargetId: null, missileTimer: 0, fireballTimer: 0, bombTimer: 0, lastHudUpdate: { unlocked: false, charge: -1, active: false, time: -1, bossHp: -1 }, stormfireTimer: 0, stormfireIcdTimer: 0 };
       lastTriggerRef.current = triggerAutoBounce;
 
       // Full World Re-Init

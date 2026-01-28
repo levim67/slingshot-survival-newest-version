@@ -229,6 +229,80 @@ export const renderGame = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
             }
             ctx.fill();
         }
+        // STORMFIRE LANCE (PARAGON)
+        else if (e.type === 'stormfire_lance') {
+            // Trail
+            if (e.trail && e.trail.length > 1) {
+                // Draw trail in World Space (temporarily escape transform)
+                ctx.restore(); ctx.save();
+
+                ctx.beginPath();
+                ctx.moveTo(e.trail[0].x, e.trail[0].y);
+                for (let i = 1; i < e.trail.length; i++) {
+                    const t = e.trail[i];
+                    // High frequency jitter for electricity look
+                    const jitter = Math.sin(state.visuals.time * 50 + i) * 3;
+                    const perpX = -(e.trail[i].y - e.trail[i - 1].y);
+                    const perpY = (e.trail[i].x - e.trail[i - 1].x);
+                    const len = Math.sqrt(perpX * perpX + perpY * perpY);
+                    const nx = len > 0 ? perpX / len : 0;
+                    const ny = len > 0 ? perpY / len : 0;
+
+                    ctx.lineTo(t.x + nx * jitter, t.y + ny * jitter);
+                }
+                ctx.lineJoin = 'round';
+                ctx.lineCap = 'round';
+
+                // Outer Glow
+                ctx.lineWidth = 8;
+                ctx.strokeStyle = 'rgba(255, 100, 0, 0.4)'; // Orange/Red glow
+                ctx.shadowColor = '#ff4400';
+                ctx.shadowBlur = 10;
+                ctx.stroke();
+
+                // Inner Bolt
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = '#ffff00'; // Yellow core
+                ctx.shadowBlur = 0;
+                ctx.stroke();
+
+                // Return to Entity Space
+                ctx.restore(); ctx.save();
+                ctx.translate(e.position.x, e.position.y);
+                if (e.rotation) ctx.rotate(e.rotation);
+            }
+
+            // Core Visuals
+            const time = state.visuals.time;
+
+            // Rotating electric arcs
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#ffaa00';
+            for (let i = 0; i < 3; i++) {
+                ctx.save();
+                ctx.rotate(time * 15 + (i * Math.PI * 2 / 3));
+                ctx.beginPath();
+                ctx.strokeStyle = i === 0 ? '#ffcc00' : '#ff6600';
+                ctx.lineWidth = 2;
+                ctx.arc(0, 0, 10 + Math.sin(time * 30 + i) * 3, 0, Math.PI * 1.5);
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            // Solid Core
+            ctx.fillStyle = '#ffffff';
+            ctx.shadowColor = '#ffffff';
+            ctx.shadowBlur = 15;
+            ctx.beginPath(); ctx.arc(0, 0, 6, 0, Math.PI * 2); ctx.fill();
+
+            // Forward Energy Spike
+            ctx.beginPath();
+            ctx.moveTo(6, -5);
+            ctx.lineTo(24, 0); // Long point
+            ctx.lineTo(6, 5);
+            ctx.fillStyle = '#ffaa00';
+            ctx.fill();
+        }
         else if (e.type === 'missile' || e.type === 'friendly_missile' || e.type === 'fireball' || e.type === 'friendly_fireball' || e.type === 'acid_spit') {
             const isFire = e.type.includes('fireball'); const isAcid = e.type.includes('acid');
             if (isFire || isAcid) {
@@ -551,11 +625,11 @@ export const renderGame = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
             }
         }
         // Wall rendering moved earlier in file (laser beams)
-        else if (e.type === 'particle' || e.type === 'shockwave' || e.type === 'lightning' || e.type === 'shockwave_ring') {
+        else if (e.type === 'particle' || e.type === 'shockwave' || e.type === 'lightning' || e.type === 'shockwave_ring' || e.type === 'stormfire_chain') {
             // OPTIMIZATION: NO SHADOW BLUR FOR PARTICLES
             ctx.globalCompositeOperation = 'lighter';
             const alpha = Math.min(1, e.lifeTime || 1);
-            if (e.type === 'lightning' && e.points) {
+            if ((e.type === 'lightning' || e.type === 'stormfire_chain') && e.points) {
                 const j = (v: number) => v + (Math.random() - 0.5) * 10;
                 // Removed shadow from lightning, used brighter stroke
                 ctx.strokeStyle = e.color || '#00ffff'; ctx.lineWidth = 6; ctx.globalAlpha = alpha * 0.6;
