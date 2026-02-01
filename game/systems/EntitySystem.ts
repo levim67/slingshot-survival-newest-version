@@ -102,7 +102,10 @@ export const updateGenericEntities = (
             if (entity.drag) entity.velocity = mult(entity.velocity || { x: 0, y: 0 }, entity.drag);
             if (entity.gravity) entity.velocity!.y += GRAVITY * 0.8 * dt;
             if (entity.angularVelocity) entity.rotation = (entity.rotation || 0) + entity.angularVelocity * dt;
-            if (entity.scaleDecay) entity.radius *= 0.95;
+            if (entity.scaleDecay) {
+                entity.radius *= 0.95;
+                entity.scale = (entity.scale || 1) * 0.95;
+            }
             if (entity.shape === 'smoke') entity.radius += 20 * dt;
         }
         if (entity.type === 'shockwave') entity.radius += 2500 * dt;

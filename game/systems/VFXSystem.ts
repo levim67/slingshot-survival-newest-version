@@ -341,11 +341,12 @@ export const spawnDebrisExplosion = (
             angularVelocity: randomRange(-15, 15),
             lifeTime: randomRange(2.0, 3.5), // Long life for float
             gravity: false,
-            drag: 0.94, // Strong drag: Burst -> Stop -> Float
+            drag: 0.95, // Burst -> Stop -> Float
             shape: 'shard',
             points: generateShardShape(size),
             color: baseColor,
-            scaleDecay: true
+            scaleDecay: true,
+            scale: 1.0
         });
     }
 

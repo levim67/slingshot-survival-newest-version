@@ -243,7 +243,19 @@ export const updateGame = (state: GameState, dt: number, upgrades: Upgrades, cal
  */
 const handleEntityUpdates = (state: GameState, realDt: number, gameDt: number, upgrades: Upgrades, callbacks: GameCallbacks) => {
     const entitiesToRemove = new Set<string>();
-    const activeEntities = state.world.entities.filter(e => Math.abs(e.position.x - state.player.position.x) < 3000);
+
+    // GARBAGE COLLECTION: Remove ANY entity that is too far, regardless of active status
+    // This fixes the "zombie debris" bug where off-screen particles froze and clogged the cap.
+    state.world.entities.forEach(e => {
+        if (Math.abs(e.position.x - state.player.position.x) > 4000) {
+            // Don't delete bosses or persistent walls instantly, but clear debris/particles
+            if (e.type !== 'boss' && e.type !== 'wall') {
+                entitiesToRemove.add(e.id);
+            }
+        }
+    });
+
+    const activeEntities = state.world.entities.filter(e => Math.abs(e.position.x - state.player.position.x) < 3500);
     const isImmune = state.utility.autoBounceState === 'ACTIVE';
 
     // Boss AI - uses realDt so death timers work correctly during slow-mo

@@ -647,6 +647,8 @@ export const renderGame = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
             ctx.save();
             ctx.translate(e.position.x, e.position.y);
             ctx.rotate(e.rotation || 0);
+            const s = e.scale !== undefined ? e.scale : 1;
+            ctx.scale(s, s);
 
             if (e.shape === 'shard' && e.points && e.points.length > 0) {
                 // CLEAN SOLID STYLE (No outlines, just clean polygons)
