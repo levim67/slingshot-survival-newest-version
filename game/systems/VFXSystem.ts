@@ -6,7 +6,7 @@ import * as audio from '../../utils/audio';
 // ==========================================
 // DEBRIS POOLING SYSTEM
 // ==========================================
-const MAX_ACTIVE_DEBRIS = 300;
+const MAX_ACTIVE_DEBRIS = 800;
 const MAX_DEBRIS_PER_EXPLOSION = 12;
 
 const getActiveDebrisCount = (state: GameState): number => {
@@ -241,8 +241,8 @@ export const spawnDebrisExplosion = (
     const count = Math.floor(18 * scale); // More shards for larger explosions
     for (let i = 0; i < count; i++) {
         const angle = randomRange(0, Math.PI * 2);
-        // SMOOTH VISIBLE BURST: Low speed, Low drag -> Drifting cloud
-        const speed = randomRange(80, 300) * (0.8 + Math.random() * 0.4);
+        // SMOOTH VISIBLE BURST: moderate speed to clear center
+        const speed = randomRange(120, 450) * (0.8 + Math.random() * 0.4);
 
         // Randomize size
         const baseSize = Math.random() > 0.7 ? randomRange(20, 30) : randomRange(10, 16);
@@ -259,7 +259,7 @@ export const spawnDebrisExplosion = (
             angularVelocity: 0, // NO ROTATION as requested
             lifeTime: randomRange(2.0, 3.5), // Long life for float
             gravity: false,
-            drag: 0.98, // Low drag: Drifts smoothly for a long time
+            drag: 0.97, // Balanced drag
             shape: 'shard',
             points: generateShardShape(size),
             color: baseColor,

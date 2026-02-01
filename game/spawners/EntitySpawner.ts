@@ -63,7 +63,7 @@ export const spawnChunkEntities = (state: GameState, startX: number, endX: numbe
             attempts++;
             pos = {
                 x: startX + Math.random() * (endX - startX),
-                y: randomRange(-5000, LAVA_LEVEL - 100)
+                y: randomRange(-2000, LAVA_LEVEL - 200)
             };
 
             // 1. Lava Check

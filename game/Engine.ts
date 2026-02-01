@@ -255,9 +255,9 @@ const handleEntityUpdates = (state: GameState, realDt: number, gameDt: number, u
             }
         }
 
-        // 2. Aggressive Debris cleanup (Visible screen only approx 1500px)
+        // 2. Aggressive Debris cleanup (Visible screen only approx 1800px)
         // If debris is offscreen, delete it immediately to free up slots
-        if (e.type === 'debris' && dist > 1500) {
+        if (e.type === 'debris' && dist > 1800) {
             entitiesToRemove.add(e.id);
         }
     });
