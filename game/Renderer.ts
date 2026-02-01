@@ -642,31 +642,43 @@ export const renderGame = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
             }
         }
         // Wall rendering moved earlier in file (laser beams)
-        // DEBRIS CHUNKS (IMAGE BASED)
+        // DEBRIS CHUNKS (PROCEDURAL SHARDS)
         else if (e.type === 'debris') {
-            const imgName = e.imageSrc;
-            // Try bitmap first, then Image
-            const bitmap = imgName ? (images as any)[imgName + '_bitmap'] : null;
-            const img = imgName && images[imgName] ? images[imgName] : null;
+            ctx.save();
+            ctx.translate(e.position.x, e.position.y);
+            ctx.rotate(e.rotation || 0);
 
-            if (bitmap || img) {
-                ctx.save();
-                ctx.translate(e.position.x, e.position.y);
-                ctx.rotate(e.rotation || 0);
+            if (e.shape === 'shard' && e.points && e.points.length > 0) {
+                // "Magma Rock" Style
+                ctx.beginPath();
+                ctx.moveTo(e.points[0].x, e.points[0].y);
+                for (let i = 1; i < e.points.length; i++) {
+                    ctx.lineTo(e.points[i].x, e.points[i].y);
+                }
+                ctx.closePath();
 
-                // Scale image larger than physics radius for visual impact
-                const size = e.radius * 2.5;
-                const source = bitmap || img;
+                // 1. Dark Rock Base
+                ctx.fillStyle = '#7f1d1d'; // Dark red/brown
+                ctx.fill();
 
-                ctx.drawImage(source, -size / 2, -size / 2, size, size);
-                ctx.restore();
+                // 2. Glowing "Magma" Cracks (Stroke)
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = '#f97316'; // Bright Orange
+                ctx.shadowColor = '#ef4444'; // Red glow
+                ctx.shadowBlur = 10;
+                ctx.stroke();
+
+                // 3. Highlight
+                ctx.fillStyle = 'rgba(255,255,255,0.1)';
+                ctx.fill();
             } else {
-                // Fallback if image missing
+                // Fallback circle
                 ctx.fillStyle = e.color;
                 ctx.beginPath();
-                ctx.arc(e.position.x, e.position.y, e.radius, 0, Math.PI * 2);
+                ctx.arc(0, 0, e.radius, 0, Math.PI * 2);
                 ctx.fill();
             }
+            ctx.restore();
         }
         else if (e.type === 'particle' || e.type === 'shockwave' || e.type === 'lightning' || e.type === 'shockwave_ring' || e.type === 'stormfire_chain') {
             // OPTIMIZATION: NO SHADOW BLUR FOR PARTICLES

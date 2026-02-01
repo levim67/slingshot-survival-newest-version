@@ -163,7 +163,7 @@ export const destroyBall = (
     if (!def) return;
 
     if (def.id === 'red_common') {
-        spawnDebrisExplosion(state, entity.position, def.coreColor, ['red_chunk_1', 'red_chunk_2', 'red_chunk_3']);
+        spawnDebrisExplosion(state, entity.position, def.coreColor);
     } else {
         spawnExplosion(state, entity.position, def.coreColor, def.glowColor, state.player.velocity);
     }

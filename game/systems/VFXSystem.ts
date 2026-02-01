@@ -292,111 +292,130 @@ export const triggerChainLightning = (
     }
 };
 
+const generateShardShape = (radius: number): Vector2[] => {
+    const points: Vector2[] = [];
+    const count = Math.floor(randomRange(5, 8)); // 5-8 vertices for jagged look
+    for (let i = 0; i < count; i++) {
+        const angle = (Math.PI * 2 * i) / count;
+        // Randomize radius for jaggedness (0.5 to 1.0 of max radius)
+        const r = radius * randomRange(0.5, 1.0);
+        points.push({ x: Math.cos(angle) * r, y: Math.sin(angle) * r });
+    }
+    return points;
+};
+
 /**
- * Spawns a high-fidelity image-based debris explosion with sparks, smoke, and flash
+ * Spawns a procedural "Space Magma" explosion
+ * High satisfaction, zero-g float feel, procedural jagged shards
  */
 export const spawnDebrisExplosion = (
     state: GameState,
     pos: Vector2,
     baseColor: string,
-    chunkImages: string[],
-    count: number = 12
+    // chunkImages removed - we use procedural generation now
 ) => {
-    // Check global limits to prevent lag
+    // Check global limits
     if (getActiveDebrisCount(state) > MAX_ACTIVE_DEBRIS) {
         spawnExplosion(state, pos, baseColor, baseColor, { x: 0, y: 0 });
         return;
     }
 
-    // 1. FLASH: Central bright burst
+    // 1. CORE FLASH (Keep it for impact, but make it fast)
     state.world.entities.push({
         id: `flash_${Math.random()}`,
         type: 'particle',
         position: { ...pos },
-        radius: 120, // Huge initial flash
+        radius: 100,
         color: '#ffffff',
         velocity: { x: 0, y: 0 },
-        lifeTime: 0.1, // Blink and it's gone
+        lifeTime: 0.12,
         shape: 'circle',
         drag: 0, gravity: false,
         scaleDecay: true
     });
 
-    // 2. SHOCKWAVE RING
-    state.world.entities.push({
-        id: `ring_${Math.random()}`,
-        type: 'shockwave_ring',
-        position: { ...pos },
-        radius: 10,  // Starts small
-        color: baseColor,
-        velocity: { x: 0, y: 0 },
-        lifeTime: 0.4, // Expands fast
-        width: 15,
-        drag: 0, gravity: false,
-    });
-
-    // 3. DEBRIS CHUNKS: Explosive Burst -> Space Float
+    // 2. PROCEDURAL SHARDS (The main event)
+    const count = 15; // More shards since they are procedural
     for (let i = 0; i < count; i++) {
         const angle = randomRange(0, Math.PI * 2);
-        // Explosive initial speed!
-        const speed = randomRange(400, 1000);
-        const img = chunkImages[Math.floor(randomRange(0, chunkImages.length))];
+        // High initial burst speed
+        const speed = randomRange(300, 900);
 
         // Randomize size
-        const size = Math.random() > 0.7 ? randomRange(35, 55) : randomRange(20, 30);
+        const size = Math.random() > 0.6 ? randomRange(25, 40) : randomRange(10, 20);
 
         state.world.entities.push({
-            id: `debris_img_${Math.random()}`,
+            id: `shard_${Math.random()}`,
             type: 'debris',
             position: { ...pos },
             velocity: { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed },
             radius: size,
             rotation: randomRange(0, Math.PI * 2),
-            angularVelocity: randomRange(-20, 20), // Fast spin
-            lifeTime: randomRange(1.5, 2.5), // Long life for float
-            gravity: true,
-            drag: 0.92, // Strong drag to simulate "Burst -> Float"
-            imageSrc: img,
-            color: baseColor,
-            scaleDecay: true // Shrinks slowly while floating
+            angularVelocity: randomRange(-15, 15),
+            lifeTime: randomRange(1.5, 3.0), // Long life for float
+            gravity: false, // ZERO G FEEL
+            drag: 0.93, // High drag: Burst -> Stop -> Float
+            shape: 'shard',
+            points: generateShardShape(size), // Generate jagged geometry
+            color: baseColor, // Will be rendered with special magma look
+            scaleDecay: true
         });
     }
 
-    // 4. SPARKS: High velocity streaks
-    const sparkCount = 30;
+    // 3. MAGMA GLOBULES (Glowing orange bits)
+    const globuleCount = 8;
+    for (let i = 0; i < globuleCount; i++) {
+        const angle = randomRange(0, Math.PI * 2);
+        const speed = randomRange(100, 400);
+        state.world.entities.push({
+            id: `glob_${Math.random()}`,
+            type: 'particle',
+            position: { ...pos },
+            radius: randomRange(8, 15),
+            color: '#f97316', // Orange
+            velocity: { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed },
+            lifeTime: randomRange(0.5, 1.2),
+            shape: 'circle',
+            gravity: false,
+            drag: 0.9,
+            scaleDecay: true
+        });
+    }
+
+    // 4. SPARKS (High speed streaks)
+    const sparkCount = 25;
     for (let i = 0; i < sparkCount; i++) {
         const angle = randomRange(0, Math.PI * 2);
-        const speed = randomRange(800, 1500); // Super fast
+        const speed = randomRange(500, 1200);
         state.world.entities.push({
             id: `spark_${Math.random()}`,
             type: 'particle',
             position: { ...pos },
-            radius: randomRange(2, 5),
-            color: '#ffcc00', // Gold
+            radius: randomRange(2, 4),
+            color: '#fbbf24', // Amber/Yellow
             velocity: { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed },
-            lifeTime: randomRange(0.3, 0.7),
+            lifeTime: randomRange(0.4, 0.8),
             shape: 'square',
-            drag: 0.88, // Decelerates
-            gravity: true,
+            drag: 0.85,
+            gravity: false, // Space sparks
             scaleDecay: true,
             isSpark: true
         });
     }
 
-    // 5. SMOKE: Expanding clouds
-    const smokeCount = 12;
+    // 5. SMOKE (Volumetric background)
+    const smokeCount = 8;
     for (let i = 0; i < smokeCount; i++) {
         const angle = randomRange(0, Math.PI * 2);
-        const speed = randomRange(20, 100);
-        const isFire = Math.random() > 0.6;
+        const speed = randomRange(50, 150);
         state.world.entities.push({
             id: `smoke_${Math.random()}`,
             type: 'particle',
             position: { ...pos },
-            radius: randomRange(20, 30),
-            color: isFire ? '#f97316' : '#555555',
+            radius: randomRange(30, 50),
+            color: '#444444',
             velocity: { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed },
-            lifeTime: randomRange(1.0, 2.0),
+            lifeTime: 1.5,
             shape: 'smoke',
             drag: 0.92,
             gravity: false,

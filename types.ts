@@ -93,7 +93,7 @@ export interface Entity {
   gravity?: boolean;
   isSpark?: boolean;
   scaleDecay?: boolean;
-  shape?: 'circle' | 'square' | 'smoke' | 'triangle' | 'wedge';
+  shape?: 'circle' | 'square' | 'smoke' | 'triangle' | 'wedge' | 'shard';
   drag?: number;
   rotation?: number;
   angularVelocity?: number;
