@@ -157,12 +157,13 @@ export const destroyBall = (
     entity: Entity,
     upgrades: Upgrades,
     entitiesToRemove: Set<string>,
-    cause: string
+    cause: string,
+    impactVel: Vector2 = { x: 0, y: 0 } // NEW: Impact velocity for directional burst
 ) => {
     const def = entity.ballDef;
     if (!def) return;
 
-    spawnDebrisExplosion(state, entity.position, def.coreColor);
+    spawnDebrisExplosion(state, entity.position, def.coreColor, 1.0, impactVel);
     if (def.points > 0) {
         spawnFloatingText(state, entity.position, `+${def.points * state.combo.multiplier}`, '#ffff00');
         state.score += def.points * state.combo.multiplier;
@@ -294,7 +295,8 @@ export const handleBallCollision = (
 
         if (destroy) {
             entitiesToRemove.add(entity.id);
-            destroyBall(state, entity, upgrades, entitiesToRemove, 'PLAYER');
+            // Pass player velocity for directional burst
+            destroyBall(state, entity, upgrades, entitiesToRemove, 'PLAYER', state.player.velocity);
         } else {
             const { v1 } = resolveElasticCollision(state.player.position, state.player.velocity, state.player.mass, entity.position, { x: 0, y: 0 }, def.mass, def.bounciness);
             state.player.velocity = v1;

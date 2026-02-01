@@ -23,7 +23,7 @@ export const updateFriendlyProjectiles = (
     activeEntities: Entity[],
     entitiesToRemove: Set<string>,
     upgrades: Upgrades,
-    destroyBallFn: (state: GameState, entity: Entity, upgrades: Upgrades, entitiesToRemove: Set<string>, cause: string) => void
+    destroyBallFn: (state: GameState, entity: Entity, upgrades: Upgrades, entitiesToRemove: Set<string>, cause: string, impactVel?: Vector2) => void
 ): boolean => {
     // SUPER MISSILE & MINI MISSILE LOGIC
     if (entity.type === 'super_missile' || entity.type === 'mini_super_missile') {
@@ -80,7 +80,7 @@ export const updateFriendlyProjectiles = (
                         if (other.bossData!.currentHealth <= 0) handleWormSegmentDeath(state, other, entitiesToRemove, upgrades);
                     } else {
                         entitiesToRemove.add(other.id);
-                        destroyBallFn(state, other, upgrades, entitiesToRemove, 'MISSILE');
+                        destroyBallFn(state, other, upgrades, entitiesToRemove, 'MISSILE', entity.velocity || { x: 0, y: 0 });
                     }
 
                     if (!isMini) {
@@ -131,7 +131,7 @@ export const updateFriendlyProjectiles = (
                         if (other.bossData!.currentHealth <= 0) handleWormSegmentDeath(state, other, entitiesToRemove, upgrades);
                     } else {
                         entitiesToRemove.add(other.id);
-                        destroyBallFn(state, other, upgrades, entitiesToRemove, 'MISSILE');
+                        destroyBallFn(state, other, upgrades, entitiesToRemove, 'MISSILE', entity.velocity || { x: 0, y: 0 });
                     }
                     break;
                 }

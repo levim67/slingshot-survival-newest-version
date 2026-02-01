@@ -228,7 +228,8 @@ export const spawnDebrisExplosion = (
     state: GameState,
     pos: Vector2,
     baseColor: string,
-    scale: number = 1.0 // Multiplier for size (e.g. 2.5 for bosses)
+    scale: number = 1.0, // Multiplier for size
+    impactVel: Vector2 = { x: 0, y: 0 } // NEW: Direction of impact
 ) => {
     // Check global limits
     if (getActiveDebrisCount(state) > MAX_ACTIVE_DEBRIS) {
@@ -236,35 +237,49 @@ export const spawnDebrisExplosion = (
         return;
     }
 
+    const hasImpact = mag(impactVel) > 50;
+    const impactAngle = hasImpact ? Math.atan2(impactVel.y, impactVel.x) : 0;
+
     // 1. PROCEDURAL SHARDS (The main event)
-    // 1. PROCEDURAL SHARDS (The main event)
-    const count = Math.floor(18 * scale); // More shards for larger explosions
+    const count = Math.floor(18 * scale);
     for (let i = 0; i < count; i++) {
-        const angle = randomRange(0, Math.PI * 2);
-        // SMOOTH VISIBLE BURST: moderate speed to clear center
-        const speed = randomRange(100, 350) * (0.8 + Math.random() * 0.4);
+        let angle: number;
+        let speed: number;
+
+        if (hasImpact) {
+            // CONE BURST: Spread +/- 70 degrees from impact direction
+            const spread = randomRange(-1.2, 1.2);
+            angle = impactAngle + spread;
+            // Speed favors forward direction
+            speed = randomRange(150, 450) * (0.8 + Math.random() * 0.4);
+        } else {
+            // OMNI BURST (if no impact vel provided, e.g. bomb)
+            angle = randomRange(0, Math.PI * 2);
+            speed = randomRange(120, 350);
+        }
 
         // Randomize size
         const baseSize = Math.random() > 0.7 ? randomRange(20, 30) : randomRange(10, 16);
         const size = baseSize * scale;
 
         // ALIGNED BURST: Position matches Velocity direction
-        // This ensures the explosion looks like it originates from the center outwards
         // DIRECT CENTER BURST: No volumetric offset, just point source
-        const offsetX = 0;
-        const offsetY = 0;
+        const finalVel = {
+            x: Math.cos(angle) * speed + (impactVel.x * 0.2), // Inherit 20% of impact momentum
+            y: Math.sin(angle) * speed + (impactVel.y * 0.2)
+        };
 
         state.world.entities.push({
             id: `shard_${Math.random()}`,
             type: 'debris',
             position: { ...pos }, // Exact center
-            velocity: { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed },
+            velocity: finalVel,
             radius: size,
             rotation: randomRange(0, Math.PI * 2),
-            angularVelocity: 0, // NO ROTATION as requested
+            angularVelocity: randomRange(-2, 2), // Slight tumble for realism
             lifeTime: randomRange(2.0, 3.5), // Long life for float
             gravity: false,
-            drag: 0.95, // Higher drag = tighter burst
+            drag: 0.94, // Balanced drag
             shape: 'shard',
             points: generateShardShape(size),
             color: baseColor,

@@ -253,8 +253,8 @@ const handleEntityUpdates = (state: GameState, realDt: number, gameDt: number, u
     state.world.entities.forEach(e => {
         const dist = Math.abs(e.position.x - state.player.position.x);
 
-        // 1. General cleanup (2500px is enough)
-        if (dist > 2500) {
+        // 1. General cleanup (15000px to prevent unloading issues)
+        if (dist > 15000) {
             if (e.type !== 'boss' && e.type !== 'wall') {
                 entitiesToRemove.add(e.id);
             }
