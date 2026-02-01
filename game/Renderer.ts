@@ -649,7 +649,7 @@ export const renderGame = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
             ctx.rotate(e.rotation || 0);
 
             if (e.shape === 'shard' && e.points && e.points.length > 0) {
-                // "Magma Rock" Style
+                // CLEAN SOLID STYLE (No outlines, just clean polygons)
                 ctx.beginPath();
                 ctx.moveTo(e.points[0].x, e.points[0].y);
                 for (let i = 1; i < e.points.length; i++) {
@@ -657,20 +657,15 @@ export const renderGame = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
                 }
                 ctx.closePath();
 
-                // 1. Dark Rock Base
-                ctx.fillStyle = '#7f1d1d'; // Dark red/brown
+                // Solid fill with the entity's color
+                ctx.fillStyle = e.color;
                 ctx.fill();
 
-                // 2. Glowing "Magma" Cracks (Stroke)
-                ctx.lineWidth = 3;
-                ctx.strokeStyle = '#f97316'; // Bright Orange
-                ctx.shadowColor = '#ef4444'; // Red glow
-                ctx.shadowBlur = 10;
+                // Slight highlight for 3D feel without heavy outline
+                ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+                ctx.lineWidth = 1;
                 ctx.stroke();
 
-                // 3. Highlight
-                ctx.fillStyle = 'rgba(255,255,255,0.1)';
-                ctx.fill();
             } else {
                 // Fallback circle
                 ctx.fillStyle = e.color;

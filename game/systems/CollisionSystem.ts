@@ -162,11 +162,7 @@ export const destroyBall = (
     const def = entity.ballDef;
     if (!def) return;
 
-    if (def.id === 'red_common') {
-        spawnDebrisExplosion(state, entity.position, def.coreColor);
-    } else {
-        spawnExplosion(state, entity.position, def.coreColor, def.glowColor, state.player.velocity);
-    }
+    spawnDebrisExplosion(state, entity.position, def.coreColor);
     if (def.points > 0) {
         spawnFloatingText(state, entity.position, `+${def.points * state.combo.multiplier}`, '#ffff00');
         state.score += def.points * state.combo.multiplier;

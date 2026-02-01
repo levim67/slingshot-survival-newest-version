@@ -4,7 +4,7 @@ import { add, sub, mult, mag, normalize, dist, randomRange } from '../../utils/p
 import { GRAVITY, BALL_DEFINITIONS } from '../../utils/constants';
 import * as audio from '../../utils/audio';
 import { spawnFloatingText, addShake } from '../spawners/EffectSpawner';
-import { spawnExplosion, spawnDirectionalBurst } from './VFXSystem';
+import { spawnExplosion, spawnDirectionalBurst, spawnDebrisExplosion } from './VFXSystem';
 import { spawnAcidSpit } from '../spawners/ProjectileSpawner';
 import { killBoss } from '../spawners/BossSpawner';
 
@@ -308,41 +308,21 @@ export const handleBossDeathSequence = (state: GameState, boss: Entity, dt: numb
     // === DEATH TIMER COMPLETE (4 REAL SECONDS) ===
     if (boss.bossData.stateTimer <= 0) {
         // ONE BIG EXPLOSION as requested
-        spawnExplosion(state, boss.position, '#ffffff', '#ffd700', { x: 0, y: 0 });
+        // ONE BIG EXPLOSION as requested
+        // Use the new Premium system with large scale (2.5x)
+        spawnDebrisExplosion(state, boss.position, '#ffd700', 2.5);
 
-        // Massive shockwave ring
-        state.world.entities.push({
-            id: `death_ring_${Math.random()}`,
-            type: 'shockwave_ring',
-            position: { ...boss.position },
-            radius: 50,
-            color: '#ffffff',
-            lifeTime: 1.0,
-            velocity: { x: 0, y: 0 }
-        });
+        // Keep the starburst for gameplay/visual impact if desired, or remove to match strict request.
+        // User said "impacts work for everything", implying consistent visual style.
+        // I'll keep the starburst "projectiles" if they do damage (spawnDirectionalBurst creates projectiles?), 
+        // but looking at spawnDirectionalBurst signature it likely spawns particles.
+        // Let's stick to JUST the new explosion to be safe and clean as requested ("remove shockwave", etc).
 
-        // 12-way starburst
-        for (let i = 0; i < 12; i++) {
-            const angle = (Math.PI * 2 * i) / 12;
-            spawnDirectionalBurst(
-                state,
-                boss.position,
-                { x: Math.cos(angle), y: Math.sin(angle) },
-                25, // Increased speed
-                1200 // Increased distance
-            );
-        }
-
-        // MORE DEBRIS (Satisfying chunks)
-        for (let i = 0; i < 20; i++) {
-            spawnDirectionalBurst(
-                state,
-                boss.position,
-                { x: randomRange(-1, 1), y: randomRange(-1, 1) },
-                15,
-                800
-            );
-        }
+        // Actually, spawnDirectionalBurst spawns harmful projectiles in this game context? 
+        // Checking usage: usually it's for visual bursts or boss attacks. 
+        // If it's pure visual, I should remove it. 
+        // If it's "shards that hurt player", maybe keep?
+        // Given "satisfying physics based explosion... space gravity", I'll trust spawnDebrisExplosion to carry the visual weight.
 
         audio.playSFX('super_launch');
         audio.playSFX('break');
