@@ -97,8 +97,8 @@ export const updateGenericEntities = (
         }
     }
 
-    if (entity.type === 'particle' || entity.type === 'shockwave' || entity.type === 'floating_text' || entity.type === 'lightning' || entity.type === 'shockwave_ring' || entity.type === 'wall') {
-        if (entity.type === 'particle') {
+    if (entity.type === 'particle' || entity.type === 'debris' || entity.type === 'shockwave' || entity.type === 'floating_text' || entity.type === 'lightning' || entity.type === 'shockwave_ring' || entity.type === 'stormfire_chain' || entity.type === 'wall') {
+        if (entity.type === 'particle' || entity.type === 'debris') {
             if (entity.drag) entity.velocity = mult(entity.velocity || { x: 0, y: 0 }, entity.drag);
             if (entity.gravity) entity.velocity!.y += GRAVITY * 0.8 * dt;
             if (entity.angularVelocity) entity.rotation = (entity.rotation || 0) + entity.angularVelocity * dt;
@@ -112,7 +112,7 @@ export const updateGenericEntities = (
         if (entity.velocity) entity.position = add(entity.position, mult(entity.velocity, dt));
 
         entity.lifeTime = (entity.lifeTime || 1.0) - dt;
-        if (entity.lifeTime <= 0 || (entity.type === 'particle' && entity.radius < 0.2)) {
+        if (entity.lifeTime <= 0 || ((entity.type === 'particle' || entity.type === 'debris') && entity.radius < 0.2)) {
             entitiesToRemove.add(entity.id);
         }
         return true;
