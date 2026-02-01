@@ -214,6 +214,9 @@ export const updateGame = (state: GameState, dt: number, upgrades: Upgrades, cal
     // --- PLATFORM COLLISIONS ---
     handlePlatformCollisions(state, upgrades);
 
+    // --- ENTITY UPDATES ---
+    handleEntityUpdates(state, dt, gameDt, upgrades, callbacks);
+
     // --- WORLD GENERATION ---
     // Fix: This was missing, causing "only one chunk" issue
     updateWorldGeneration(state);
