@@ -18,6 +18,7 @@ import { handlePlatformCollisions, handleBossCollision, handleBallCollision, han
 import { updateFriendlyProjectiles, updateEnemyProjectiles, updateBomb } from './systems/ProjectileSystem';
 import { updateGenericEntities, updateLavaParticles, explodeBomb } from './systems/EntitySystem';
 import { spawnDirectionalBurst } from './systems/VFXSystem';
+
 import { updateStormfireLance } from './systems/StormfireSystem';
 
 // Spawners
@@ -213,8 +214,9 @@ export const updateGame = (state: GameState, dt: number, upgrades: Upgrades, cal
     // --- PLATFORM COLLISIONS ---
     handlePlatformCollisions(state, upgrades);
 
-    // --- ENTITY UPDATES ---
-    handleEntityUpdates(state, dt, gameDt, upgrades, callbacks);
+    // --- WORLD GENERATION ---
+    // Fix: This was missing, causing "only one chunk" issue
+    updateWorldGeneration(state);
 
     // --- PLAYER STATUS ---
     if (state.player.position.y > LAVA_LEVEL - 10) {
@@ -248,17 +250,11 @@ const handleEntityUpdates = (state: GameState, realDt: number, gameDt: number, u
     state.world.entities.forEach(e => {
         const dist = Math.abs(e.position.x - state.player.position.x);
 
-        // 1. General cleanup (2000px is enough, 4000 was too safe)
+        // 1. General cleanup (2500px is enough)
         if (dist > 2500) {
             if (e.type !== 'boss' && e.type !== 'wall') {
                 entitiesToRemove.add(e.id);
             }
-        }
-
-        // 2. Aggressive Debris cleanup (Visible screen only approx 1800px)
-        // If debris is offscreen, delete it immediately to free up slots
-        if (e.type === 'debris' && dist > 1800) {
-            entitiesToRemove.add(e.id);
         }
     });
 

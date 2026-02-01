@@ -250,14 +250,14 @@ export const spawnDebrisExplosion = (
 
         // ALIGNED BURST: Position matches Velocity direction
         // This ensures the explosion looks like it originates from the center outwards
-        const spawnRadius = randomRange(0, 15 * scale); // Distribute within ball volume
-        const offsetX = Math.cos(angle) * spawnRadius;
-        const offsetY = Math.sin(angle) * spawnRadius;
+        // DIRECT CENTER BURST: No volumetric offset, just point source
+        const offsetX = 0;
+        const offsetY = 0;
 
         state.world.entities.push({
             id: `shard_${Math.random()}`,
             type: 'debris',
-            position: add(pos, { x: offsetX, y: offsetY }),
+            position: { ...pos }, // Exact center
             velocity: { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed },
             radius: size,
             rotation: randomRange(0, Math.PI * 2),
@@ -293,24 +293,5 @@ export const spawnDebrisExplosion = (
             isSpark: true
         });
     }
-
-    // 3. SMOKE (Volumetric background clouds)
-    const smokeCount = Math.floor(12 * scale);
-    for (let i = 0; i < smokeCount; i++) {
-        const angle = randomRange(0, Math.PI * 2);
-        const speed = randomRange(50, 200);
-        state.world.entities.push({
-            id: `smoke_${Math.random()}`,
-            type: 'particle',
-            position: { ...pos },
-            radius: randomRange(30, 60) * scale,
-            color: '#555555', // Neutral grey
-            velocity: { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed },
-            lifeTime: randomRange(2.0, 3.0), // Lingers properly
-            shape: 'smoke',
-            drag: 0.92,
-            gravity: false,
-            scaleDecay: true
-        });
-    }
+    // SMOKE REMOVED per user request
 };
