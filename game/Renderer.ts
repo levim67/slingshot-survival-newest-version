@@ -644,8 +644,10 @@ export const renderGame = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
         // Wall rendering moved earlier in file (laser beams)
         // DEBRIS CHUNKS (PROCEDURAL SHARDS)
         else if (e.type === 'debris') {
+            // NOTE: ctx.translate(e.position.x, e.position.y) was already called for ALL entities
+            // at line ~101 before entering the 'if' chain. DO NOT translate again here!
             ctx.save();
-            ctx.translate(e.position.x, e.position.y);
+            // ctx.translate REMOVED - was causing double-translation bug
             ctx.rotate(e.rotation || 0);
             const s = e.scale !== undefined ? e.scale : 1;
             ctx.scale(s, s);
