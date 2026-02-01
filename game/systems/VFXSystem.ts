@@ -248,11 +248,16 @@ export const spawnDebrisExplosion = (
         const baseSize = Math.random() > 0.7 ? randomRange(20, 30) : randomRange(10, 16);
         const size = baseSize * scale;
 
+        // ALIGNED BURST: Position matches Velocity direction
+        // This ensures the explosion looks like it originates from the center outwards
+        const spawnRadius = randomRange(0, 15 * scale); // Distribute within ball volume
+        const offsetX = Math.cos(angle) * spawnRadius;
+        const offsetY = Math.sin(angle) * spawnRadius;
+
         state.world.entities.push({
             id: `shard_${Math.random()}`,
             type: 'debris',
-            // Spawn with random offset to simulate volumetric break (prevents perfect circle look)
-            position: add(pos, { x: randomRange(-12, 12), y: randomRange(-12, 12) }),
+            position: add(pos, { x: offsetX, y: offsetY }),
             velocity: { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed },
             radius: size,
             rotation: randomRange(0, Math.PI * 2),
