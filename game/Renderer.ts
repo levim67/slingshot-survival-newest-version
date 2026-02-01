@@ -659,8 +659,10 @@ export const renderGame = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
                 }
                 ctx.closePath();
 
-                // Solid fill with the entity's color
+                // Solid fill with glow
                 ctx.fillStyle = e.color;
+                ctx.shadowColor = e.color;
+                ctx.shadowBlur = 15;
                 ctx.fill();
 
                 // Slight highlight for 3D feel without heavy outline

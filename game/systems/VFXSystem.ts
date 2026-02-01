@@ -325,10 +325,11 @@ export const spawnDebrisExplosion = (
     for (let i = 0; i < count; i++) {
         const angle = randomRange(0, Math.PI * 2);
         // High initial burst speed - smooth "firework" expansion
-        const speed = randomRange(400, 1000) * (0.8 + Math.random() * 0.4);
+        // REDUCED SPEED to prevent "teleporting" look
+        const speed = randomRange(150, 500) * (0.8 + Math.random() * 0.4);
 
         // Randomize size
-        const baseSize = Math.random() > 0.7 ? randomRange(25, 40) : randomRange(12, 22);
+        const baseSize = Math.random() > 0.7 ? randomRange(20, 35) : randomRange(10, 18);
         const size = baseSize * scale;
 
         state.world.entities.push({
@@ -338,10 +339,10 @@ export const spawnDebrisExplosion = (
             velocity: { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed },
             radius: size,
             rotation: randomRange(0, Math.PI * 2),
-            angularVelocity: randomRange(-15, 15),
+            angularVelocity: randomRange(-4, 4), // Slower rotation
             lifeTime: randomRange(2.0, 3.5), // Long life for float
             gravity: false,
-            drag: 0.95, // Burst -> Stop -> Float
+            drag: 0.96, // Burst -> Stop -> Float
             shape: 'shard',
             points: generateShardShape(size),
             color: baseColor,
