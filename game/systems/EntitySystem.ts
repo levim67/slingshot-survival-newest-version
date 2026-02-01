@@ -99,7 +99,11 @@ export const updateGenericEntities = (
 
     if (entity.type === 'particle' || entity.type === 'debris' || entity.type === 'shockwave' || entity.type === 'floating_text' || entity.type === 'lightning' || entity.type === 'shockwave_ring' || entity.type === 'stormfire_chain' || entity.type === 'wall') {
         if (entity.type === 'particle' || entity.type === 'debris') {
-            if (entity.drag) entity.velocity = mult(entity.velocity || { x: 0, y: 0 }, entity.drag);
+            if (entity.drag) {
+                // Framerate-independent drag: scale drag factor by time delta
+                const dragFactor = Math.pow(entity.drag, dt * 60);
+                entity.velocity = mult(entity.velocity || { x: 0, y: 0 }, dragFactor);
+            }
             if (entity.gravity) entity.velocity!.y += GRAVITY * 0.8 * dt;
             if (entity.angularVelocity) entity.rotation = (entity.rotation || 0) + entity.angularVelocity * dt;
             if (entity.scaleDecay) {

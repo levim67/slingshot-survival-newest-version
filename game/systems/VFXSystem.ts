@@ -251,7 +251,8 @@ export const spawnDebrisExplosion = (
         state.world.entities.push({
             id: `shard_${Math.random()}`,
             type: 'debris',
-            position: { ...pos },
+            // Spawn with random offset to simulate volumetric break (prevents perfect circle look)
+            position: add(pos, { x: randomRange(-12, 12), y: randomRange(-12, 12) }),
             velocity: { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed },
             radius: size,
             rotation: randomRange(0, Math.PI * 2),
