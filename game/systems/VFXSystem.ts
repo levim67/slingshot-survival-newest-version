@@ -242,7 +242,7 @@ export const spawnDebrisExplosion = (
     for (let i = 0; i < count; i++) {
         const angle = randomRange(0, Math.PI * 2);
         // SMOOTH VISIBLE BURST: moderate speed to clear center
-        const speed = randomRange(120, 450) * (0.8 + Math.random() * 0.4);
+        const speed = randomRange(100, 350) * (0.8 + Math.random() * 0.4);
 
         // Randomize size
         const baseSize = Math.random() > 0.7 ? randomRange(20, 30) : randomRange(10, 16);
@@ -264,7 +264,7 @@ export const spawnDebrisExplosion = (
             angularVelocity: 0, // NO ROTATION as requested
             lifeTime: randomRange(2.0, 3.5), // Long life for float
             gravity: false,
-            drag: 0.97, // Balanced drag
+            drag: 0.95, // Higher drag = tighter burst
             shape: 'shard',
             points: generateShardShape(size),
             color: baseColor,
@@ -277,7 +277,7 @@ export const spawnDebrisExplosion = (
     const sparkCount = Math.floor(40 * scale);
     for (let i = 0; i < sparkCount; i++) {
         const angle = randomRange(0, Math.PI * 2);
-        const speed = randomRange(600, 1400); // Faster than debris
+        const speed = randomRange(400, 900); // Faster than debris
         state.world.entities.push({
             id: `spark_${Math.random()}`,
             type: 'particle',
