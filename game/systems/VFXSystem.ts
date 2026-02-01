@@ -237,35 +237,22 @@ export const spawnDebrisExplosion = (
         return;
     }
 
-    const hasImpact = mag(impactVel) > 50;
-    const impactAngle = hasImpact ? Math.atan2(impactVel.y, impactVel.x) : 0;
-
     // 1. PROCEDURAL SHARDS (The main event)
     const count = Math.floor(18 * scale);
     for (let i = 0; i < count; i++) {
-        let angle: number;
-        let speed: number;
-
-        if (hasImpact) {
-            // CONE BURST: Spread +/- 70 degrees from impact direction
-            const spread = randomRange(-1.2, 1.2);
-            angle = impactAngle + spread;
-            // Speed favors forward direction
-            speed = randomRange(150, 450) * (0.8 + Math.random() * 0.4);
-        } else {
-            // OMNI BURST (if no impact vel provided, e.g. bomb)
-            angle = randomRange(0, Math.PI * 2);
-            speed = randomRange(120, 350);
-        }
+        // OMNI-DIRECTIONAL BURST (Matching Sparks)
+        const angle = randomRange(0, Math.PI * 2);
+        // Speed: 150-450
+        const speed = randomRange(150, 450) * (0.8 + Math.random() * 0.4);
 
         // Randomize size
         const baseSize = Math.random() > 0.7 ? randomRange(20, 30) : randomRange(10, 16);
         const size = baseSize * scale;
 
-        // ALIGNED BURST: Position matches Velocity direction
-        // DIRECT CENTER BURST: No volumetric offset, just point source
+        // PHYSICS: Omni-burst + Inherited Momentum
+        // This creates a sphere that moves with the impact, rather than a cone.
         const finalVel = {
-            x: Math.cos(angle) * speed + (impactVel.x * 0.2), // Inherit 20% of impact momentum
+            x: Math.cos(angle) * speed + (impactVel.x * 0.2),
             y: Math.sin(angle) * speed + (impactVel.y * 0.2)
         };
 
@@ -276,10 +263,10 @@ export const spawnDebrisExplosion = (
             velocity: finalVel,
             radius: size,
             rotation: randomRange(0, Math.PI * 2),
-            angularVelocity: randomRange(-2, 2), // Slight tumble for realism
-            lifeTime: randomRange(2.0, 3.5), // Long life for float
+            angularVelocity: 0, // NO ROTATION (Matches Sparks)
+            lifeTime: randomRange(2.0, 3.5),
             gravity: false,
-            drag: 0.94, // Balanced drag
+            drag: 0.91, // Snappier drag (Closer to Sparks 0.88)
             shape: 'shard',
             points: generateShardShape(size),
             color: baseColor,
