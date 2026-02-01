@@ -244,14 +244,21 @@ export const updateGame = (state: GameState, dt: number, upgrades: Upgrades, cal
 const handleEntityUpdates = (state: GameState, realDt: number, gameDt: number, upgrades: Upgrades, callbacks: GameCallbacks) => {
     const entitiesToRemove = new Set<string>();
 
-    // GARBAGE COLLECTION: Remove ANY entity that is too far, regardless of active status
-    // This fixes the "zombie debris" bug where off-screen particles froze and clogged the cap.
+    // GARBAGE COLLECTION: Aggressive culling to prevent "zombie" debris blocking spawn limits
     state.world.entities.forEach(e => {
-        if (Math.abs(e.position.x - state.player.position.x) > 4000) {
-            // Don't delete bosses or persistent walls instantly, but clear debris/particles
+        const dist = Math.abs(e.position.x - state.player.position.x);
+
+        // 1. General cleanup (2000px is enough, 4000 was too safe)
+        if (dist > 2500) {
             if (e.type !== 'boss' && e.type !== 'wall') {
                 entitiesToRemove.add(e.id);
             }
+        }
+
+        // 2. Aggressive Debris cleanup (Visible screen only approx 1500px)
+        // If debris is offscreen, delete it immediately to free up slots
+        if (e.type === 'debris' && dist > 1500) {
+            entitiesToRemove.add(e.id);
         }
     });
 

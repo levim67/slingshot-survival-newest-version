@@ -321,15 +321,15 @@ export const spawnDebrisExplosion = (
     }
 
     // 1. PROCEDURAL SHARDS (The main event)
+    // 1. PROCEDURAL SHARDS (The main event)
     const count = Math.floor(18 * scale); // More shards for larger explosions
     for (let i = 0; i < count; i++) {
         const angle = randomRange(0, Math.PI * 2);
-        // High initial burst speed - smooth "firework" expansion
-        // REDUCED SPEED to prevent "teleporting" look
-        const speed = randomRange(150, 500) * (0.8 + Math.random() * 0.4);
+        // SMOOTH VISIBLE BURST: Low speed, Low drag -> Drifting cloud
+        const speed = randomRange(80, 300) * (0.8 + Math.random() * 0.4);
 
         // Randomize size
-        const baseSize = Math.random() > 0.7 ? randomRange(20, 35) : randomRange(10, 18);
+        const baseSize = Math.random() > 0.7 ? randomRange(20, 30) : randomRange(10, 16);
         const size = baseSize * scale;
 
         state.world.entities.push({
@@ -339,10 +339,10 @@ export const spawnDebrisExplosion = (
             velocity: { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed },
             radius: size,
             rotation: randomRange(0, Math.PI * 2),
-            angularVelocity: randomRange(-4, 4), // Slower rotation
+            angularVelocity: 0, // NO ROTATION as requested
             lifeTime: randomRange(2.0, 3.5), // Long life for float
             gravity: false,
-            drag: 0.96, // Burst -> Stop -> Float
+            drag: 0.98, // Low drag: Drifts smoothly for a long time
             shape: 'shard',
             points: generateShardShape(size),
             color: baseColor,
